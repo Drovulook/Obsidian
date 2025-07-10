@@ -1,0 +1,39 @@
+🎯 Raccourcis clavier principaux :
+🔧 Configuration et compilation :
+Ctrl+Shift+P → Ouvrir la palette de commandes
+Ctrl+Shift+B → Compiler (Build) - Lance la tâche de build par défaut
+Ctrl+Shift+P → "Tasks: Run Task" → Choisir une tâche spécifique
+
+🐛 Débogage :
+F5 → Démarrer le débogage (Debug)
+Ctrl+F5 → Exécuter sans débogage (Run)
+Shift+F5 → Arrêter le débogage
+F10 → Pas à pas (Step Over)
+F11 → Entrer dans la fonction (Step Into)
+Shift+F11 → Sortir de la fonction (Step Out)
+
+⚙️ CMake spécifique :
+Ctrl+Shift+P → "CMake: Configure" → Actualiser la configuration CMake
+Ctrl+Shift+P → "CMake: Build" → Compiler avec CMake
+Ctrl+Shift+P → "CMake: Clean" → Nettoyer le build
+
+📋 Tâches disponibles dans votre projet :
+Avec Ctrl+Shift+P → "Tasks: Run Task" vous pouvez choisir :
+
+"Configure CMake" → Actualise la configuration
+"Build Debug" → Compile en mode Debug
+"Build Release" → Compile en mode Release
+"Clean" → Nettoie les fichiers de build
+"Run Debug" → Exécute la version Debug
+"Run Release" → Exécute la version Release
+
+🔥 Workflow recommandé :
+Modifier le code → Éditer main.cpp ou autres fichiers
+Ctrl+Shift+B → Compiler rapidement
+F5 → Déboguer si nécessaire
+Ctrl+F5 → Exécuter normalement
+
+💡 Astuce supplémentaire :
+Si vous ajoutez des fichiers ou modifiez le CMakeLists.txt :
+
+Ctrl+Shift+P → "CMake: Configure" pour actualiser la configuration

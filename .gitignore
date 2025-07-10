@@ -1,0 +1,21 @@
+# Build directories
+build/
+bin/
+
+# Libraries (trop lourdes pour Git)
+Libraries/
+
+# Vulkan SDK config (spécifique à chaque machine)
+.env
+
+# Executables
+*.exe
+
+# Visual Studio / CMake générés
+.vs/
+CMakeFiles/
+CMakeCache.txt
+
+# Fichiers temporaires
+*.tmp
+*.log
