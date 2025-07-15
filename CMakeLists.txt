@@ -33,9 +33,33 @@ add_subdirectory(Libraries/glfw-3.4)
 # Add GLM
 add_subdirectory(Libraries/glm-1.0.1)
 
-# Create executable
+# Collect all source files from engine directory and subdirectories
+file(GLOB_RECURSE ENGINE_SOURCES
+    "engine/*.cpp"
+    "engine/*.c"
+)
+
+# Collect all header files from engine directory and subdirectories
+file(GLOB_RECURSE ENGINE_HEADERS
+    "engine/*.h"
+    "engine/*.hpp"
+)
+
+# Display found files for debugging
+message(STATUS "Found source files:")
+foreach(source ${ENGINE_SOURCES})
+    message(STATUS "  ${source}")
+endforeach()
+
+message(STATUS "Found header files:")
+foreach(header ${ENGINE_HEADERS})
+    message(STATUS "  ${header}")
+endforeach()
+
+# Create executable with all found sources
 add_executable(${PROJECT_NAME}
-    engine/main.cpp
+    ${ENGINE_SOURCES}
+    ${ENGINE_HEADERS}  # Add headers for IDE support
 )
 
 # Include directories
@@ -43,6 +67,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${Vulkan_INCLUDE_DIRS}
     Libraries/glfw-3.4/include
     Libraries/glm-1.0.1
+    engine                    # Root engine directory
 )
 
 # Link libraries

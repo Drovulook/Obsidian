@@ -4,10 +4,11 @@
     "cmake.generator": "Visual Studio 17 2022",
     "cmake.platform": "x64",
     "files.associations": {
-        "*.h": "c",
+        "*.h": "cpp",
         "*.hpp": "cpp",
         "*.cpp": "cpp",
-        "*.c": "c"
+        "*.c": "c",
+        "xstring": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }
