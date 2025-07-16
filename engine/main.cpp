@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 int main() {
-    od_engine::App app {};
+    ODEngine::App app {};
     try {
         app.run();
     } catch(const std::exception &e) {

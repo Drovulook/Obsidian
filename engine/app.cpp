@@ -1,8 +1,8 @@
 #include "app.h"
 
-namespace od_engine {
+namespace ODEngine {
     void App::run() {
-        while(!m_window.shouldClose()) {
+        while(!m_ODWindow.shouldClose()) {
             glfwPollEvents(); 
         }
     }
