@@ -14,7 +14,7 @@ namespace ODEngine {
 
         private:
             ODWindow m_window{WIDTH, HEIGHT, "Obsidian Engine"};
-            ODDevice m_ODDevice{m_window};
+            ODDevice m_device{m_window};
             ODPipeline m_pipeline{
                 m_device, 
                 "engine/shaders/simple_shader.vert.spv", 
