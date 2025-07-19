@@ -8,6 +8,7 @@
 
 namespace ODEngine {
     App::App(){
+        loadModels();
         createPipelineLayout();
         createPipeline();
         createCommandBuffers();
@@ -24,7 +25,18 @@ namespace ODEngine {
         }
         vkDeviceWaitIdle(m_device.device());
     }
-    void App::createPipelineLayout(){
+    void App::loadModels(){
+        // std::vector<ODModel::Vertex> vertices = {
+        //     {{0.0f, -0.5f}},
+        //     {{0.5f, 0.5f}},
+        //     {{-0.5f, 0.5f}}
+        // };
+        std::vector<ODModel::Vertex> vertices{};
+        SierpinskiTriangle(vertices, 5, {-0.5f, 0.5f}, {0.5f, 0.5f}, {0.0f, -0.5f});
+        m_model = std::make_unique<ODModel>(m_device, vertices);
+    }
+    void App::createPipelineLayout()
+    {
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 0; 
@@ -50,8 +62,8 @@ namespace ODEngine {
     }
 
     void App::createCommandBuffers(){
-        // Allocate command buffers
         
+        // Allocate command buffers  
         m_commandBuffers.resize(m_swapChain.imageCount());
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -87,7 +99,8 @@ namespace ODEngine {
 
             vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
             m_pipeline->bind(m_commandBuffers[i]);
-            vkCmdDraw(m_commandBuffers[i], 3, 1, 0, 0);
+            m_model->bind(m_commandBuffers[i]);
+            m_model->draw(m_commandBuffers[i]);
             vkCmdEndRenderPass(m_commandBuffers[i]);
 
             if (vkEndCommandBuffer(m_commandBuffers[i]) != VK_SUCCESS) {
@@ -108,5 +121,19 @@ namespace ODEngine {
         if(result != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image!");
         }
+    }
+    void App::SierpinskiTriangle(std::vector<ODModel::Vertex> &vertices, int depth, glm::vec2 top, glm::vec2 left, glm::vec2 right){
+        if (depth <= 0) {
+            vertices.push_back({top});
+            vertices.push_back({right});
+            vertices.push_back({left});
+        } else {
+            auto leftTop = 0.5f * (left + top);
+            auto rightTop = 0.5f * (right + top);
+            auto leftRight = 0.5f * (left + right);
+            SierpinskiTriangle(vertices, depth - 1, left, leftRight, leftTop);
+            SierpinskiTriangle(vertices, depth - 1, leftRight, right, rightTop);
+            SierpinskiTriangle(vertices, depth - 1, leftTop, rightTop, top);
+        }   
     }
 }

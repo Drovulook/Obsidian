@@ -84,6 +84,16 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# Add custom target for shader compilation
+add_custom_target(compile_shaders
+    COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/engine/shaders compile.bat
+    COMMENT "Compiling shaders..."
+    VERBATIM
+)
+
+# Make shader compilation a dependency of the main executable
+add_dependencies(${PROJECT_NAME} compile_shaders)
+
 # Set output directory
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin

@@ -4,6 +4,7 @@
 #include "ODPipeline.h"
 #include "ODSwapChain.h"
 #include "ODWindow.h"
+#include "ODModel.h"
 
 // std
 #include <memory>
@@ -24,10 +25,18 @@ namespace ODEngine {
             void run();
 
         private:
+        void loadModels();
         void createPipelineLayout();
         void createPipeline();
         void createCommandBuffers();
         void drawFrame();
+
+        void SierpinskiTriangle(
+            std::vector<ODModel::Vertex>& vertices, 
+            int depth,
+            glm::vec2 top, 
+            glm::vec2 left, 
+            glm::vec2 right);
 
         private:
             ODWindow m_window{WIDTH, HEIGHT, "Obsidian Engine"};
@@ -36,6 +45,7 @@ namespace ODEngine {
             std::unique_ptr<ODPipeline> m_pipeline;
             VkPipelineLayout m_pipelineLayout = nullptr;
             std::vector<VkCommandBuffer> m_commandBuffers;
+            std::unique_ptr<ODModel> m_model;
 
     };
 }
