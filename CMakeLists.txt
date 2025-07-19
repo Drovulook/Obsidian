@@ -28,53 +28,95 @@ else()
 endif()
 
 # Add GLFW
-add_subdirectory(Libraries/glfw-3.4)
+add_subdirectory(engine/libraries/glfw-3.4)
 
 # Add GLM
-add_subdirectory(Libraries/glm-1.0.1)
+add_subdirectory(engine/libraries/glm-1.0.1)
 
-# Collect all source files from engine directory and subdirectories
+# Collect all source files from engine/src directory (excluding main.cpp)
 file(GLOB_RECURSE ENGINE_SOURCES
-    "engine/*.cpp"
-    "engine/*.c"
+    "engine/src/*.cpp"
+    "engine/src/*.c"
 )
 
-# Collect all header files from engine directory and subdirectories
+# Remove main.cpp from engine sources as it will be part of the executable
+list(REMOVE_ITEM ENGINE_SOURCES "${CMAKE_SOURCE_DIR}/engine/src/main.cpp")
+
+# Collect all header files from engine/src directory
 file(GLOB_RECURSE ENGINE_HEADERS
-    "engine/*.h"
-    "engine/*.hpp"
+    "engine/src/*.h"
+    "engine/src/*.hpp"
+)
+
+# Collect all source files from sandbox directory
+file(GLOB_RECURSE SANDBOX_SOURCES
+    "sandbox/*.cpp"
+    "sandbox/*.c"
+)
+
+# Collect all header files from sandbox directory
+file(GLOB_RECURSE SANDBOX_HEADERS
+    "sandbox/*.h"
+    "sandbox/*.hpp"
 )
 
 # Display found files for debugging
-message(STATUS "Found source files:")
+message(STATUS "Found engine source files:")
 foreach(source ${ENGINE_SOURCES})
     message(STATUS "  ${source}")
 endforeach()
 
-message(STATUS "Found header files:")
+message(STATUS "Found engine header files:")
 foreach(header ${ENGINE_HEADERS})
     message(STATUS "  ${header}")
 endforeach()
 
-# Create executable with all found sources
-add_executable(${PROJECT_NAME}
+message(STATUS "Found sandbox source files:")
+foreach(source ${SANDBOX_SOURCES})
+    message(STATUS "  ${source}")
+endforeach()
+
+message(STATUS "Found sandbox header files:")
+foreach(header ${SANDBOX_HEADERS})
+    message(STATUS "  ${header}")
+endforeach()
+
+# Create engine library (static library containing all engine functionality)
+add_library(ObsidianEngine STATIC
     ${ENGINE_SOURCES}
     ${ENGINE_HEADERS}  # Add headers for IDE support
 )
 
-# Include directories
-target_include_directories(${PROJECT_NAME} PRIVATE
+# Configure engine library
+target_include_directories(ObsidianEngine PUBLIC
     ${Vulkan_INCLUDE_DIRS}
-    Libraries/glfw-3.4/include
-    Libraries/glm-1.0.1
-    engine                    # Root engine directory
+    engine/libraries/glfw-3.4/include
+    engine/libraries/glm-1.0.1
+    engine/src                # Engine source directory
 )
 
-# Link libraries
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(ObsidianEngine PUBLIC
     ${Vulkan_LIBRARIES}
     glfw
     glm
+)
+
+# Create executable with main.cpp and sandbox sources
+add_executable(${PROJECT_NAME}
+    engine/src/main.cpp       # Main entry point in engine/src
+    ${SANDBOX_SOURCES}
+    ${SANDBOX_HEADERS}        # Add sandbox headers for IDE support
+)
+
+# Include directories for the executable
+target_include_directories(${PROJECT_NAME} PRIVATE
+    engine/src                # Engine source directory  
+    sandbox                   # Sandbox directory
+)
+
+# Link the executable with the engine library
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    ObsidianEngine           # Link with our engine library
 )
 
 # Compiler-specific options
@@ -91,8 +133,8 @@ add_custom_target(compile_shaders
     VERBATIM
 )
 
-# Make shader compilation a dependency of the main executable
-add_dependencies(${PROJECT_NAME} compile_shaders)
+# Make shader compilation a dependency of the engine library
+add_dependencies(ObsidianEngine compile_shaders)
 
 # Set output directory
 set_target_properties(${PROJECT_NAME} PROPERTIES

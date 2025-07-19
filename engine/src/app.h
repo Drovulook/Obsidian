@@ -17,12 +17,12 @@ namespace ODEngine {
             static constexpr int HEIGHT = 700;
 
             App();
-            ~App();
+            virtual ~App();
 
             App(const App&) = delete;
             App& operator=(const App&) = delete;
 
-            void run();
+            virtual void run();
 
         private:
         void loadModels();
@@ -48,4 +48,6 @@ namespace ODEngine {
             std::unique_ptr<ODModel> m_model;
 
     };
+
+    App* CreateApp();
 }

@@ -5,10 +5,12 @@
 #include <iostream>
 #include <stdexcept>
 
+extern ODEngine::App* ODEngine::CreateApp();
+
 int main() {
-    ODEngine::App app {};
+    auto app = ODEngine::CreateApp();
     try {
-        app.run();
+        app->run();
     } catch(const std::exception &e) {
         std::cerr << e.what() << '\n';
         return EXIT_FAILURE;

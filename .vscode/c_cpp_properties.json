@@ -4,8 +4,9 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/Libraries/glfw-3.4/include",
-                "${workspaceFolder}/Libraries/glm-1.0.1",
+                "${workspaceFolder}/engine/src",
+                "${workspaceFolder}/engine/libraries/glfw-3.4/include",
+                "${workspaceFolder}/engine/libraries/glm-1.0.1",
                 "C:/dev/VulkanSDK/1.4.313.2/Include"
             ],
             "defines": [
