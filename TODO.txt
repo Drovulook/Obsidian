@@ -1,4 +1,4 @@
-### régler problème sémaphores:
+### régler problème sémaphores: OK
 
 validation layer: vkQueueSubmit(): pSubmits[0].pSignalSemaphores[0] (VkSemaphore 0x190000000019) is being signaled by VkQueue 0x17846017fd0, but it may still be in use by VkSwapchainKHR 0x40000000004.
 Here are the most recently acquired image indices: [0], 1, 2.

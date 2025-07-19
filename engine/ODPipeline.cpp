@@ -20,8 +20,7 @@ namespace ODEngine {
         vkDestroyPipeline(m_device.device(), m_graphicsPipeline, nullptr);
     }
 
-    std::vector<char> ODPipeline::readFile(const std::string &filename)
-    {
+    std::vector<char> ODPipeline::readFile(const std::string &filename){
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
         if(!file.is_open()) {
@@ -77,20 +76,13 @@ namespace ODEngine {
         vertexInputInfo.vertexAttributeDescriptionCount = 0;
         vertexInputInfo.pVertexAttributeDescriptions = nullptr;  // Optional
 
-        VkPipelineViewportStateCreateInfo viewportInfo{};
-        viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-        viewportInfo.viewportCount = 1;
-        viewportInfo.pViewports = &configInfo.viewport;
-        viewportInfo.scissorCount = 1;
-        viewportInfo.pScissors = &configInfo.scissor;
-
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         pipelineInfo.stageCount = 2;
         pipelineInfo.pStages = shaderStages;
         pipelineInfo.pVertexInputState = &vertexInputInfo;
         pipelineInfo.pInputAssemblyState = &configInfo.inputAssemblyInfo;
-        pipelineInfo.pViewportState = &viewportInfo;
+        pipelineInfo.pViewportState = &configInfo.viewportInfo;
         pipelineInfo.pRasterizationState = &configInfo.rasterizationInfo;
         pipelineInfo.pMultisampleState = &configInfo.multisampleInfo;
         pipelineInfo.pColorBlendState = &configInfo.colorBlendInfo;
@@ -124,9 +116,7 @@ namespace ODEngine {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
     }
 
-    ODPipelineConfigInfo ODPipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height)
-    {
-        ODPipelineConfigInfo configInfo{};
+    void ODPipeline::defaultPipelineConfigInfo(ODPipelineConfigInfo& configInfo, uint32_t width, uint32_t height){
         
         // inputAssembly
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -144,6 +134,13 @@ namespace ODEngine {
 
         configInfo.scissor.offset = {0, 0};
         configInfo.scissor.extent = {width, height};
+
+
+        configInfo.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        configInfo.viewportInfo.viewportCount = 1;
+        configInfo.viewportInfo.pViewports = &configInfo.viewport;
+        configInfo.viewportInfo.scissorCount = 1;
+        configInfo.viewportInfo.pScissors = &configInfo.scissor;
 
         // rasterization
         configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -201,6 +198,5 @@ namespace ODEngine {
         configInfo.depthStencilInfo.front = {};  // Optional
         configInfo.depthStencilInfo.back = {};   // Optional
 
-        return configInfo;
     }
 }

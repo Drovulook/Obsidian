@@ -9,8 +9,14 @@
 
 namespace ODEngine {
     struct ODPipelineConfigInfo {
+        ODPipelineConfigInfo() = default;
+
+        ODPipelineConfigInfo(const ODPipelineConfigInfo&) = delete;
+        ODPipelineConfigInfo& operator=(const ODPipelineConfigInfo&) = delete;
+
         VkViewport viewport;
         VkRect2D scissor;
+        VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;
         VkPipelineMultisampleStateCreateInfo multisampleInfo;
@@ -38,7 +44,7 @@ namespace ODEngine {
 
             void bind(VkCommandBuffer commandBuffer);
 
-            static ODPipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
+            static void defaultPipelineConfigInfo(ODPipelineConfigInfo& configInfo, uint32_t width, uint32_t height);
 
         private:
             static std::vector<char> readFile(const std::string& filename);

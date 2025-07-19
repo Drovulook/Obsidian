@@ -37,7 +37,8 @@ namespace ODEngine {
         }
     }
     void App::createPipeline() {
-        auto pipelineConfig = ODPipeline::defaultPipelineConfigInfo(m_swapChain.width(), m_swapChain.height());
+        ODPipelineConfigInfo pipelineConfig{};
+        ODPipeline::defaultPipelineConfigInfo(pipelineConfig, m_swapChain.width(), m_swapChain.height());
         pipelineConfig.renderPass = m_swapChain.getRenderPass();
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
