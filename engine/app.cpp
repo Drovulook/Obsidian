@@ -26,13 +26,13 @@ namespace ODEngine {
         vkDeviceWaitIdle(m_device.device());
     }
     void App::loadModels(){
-        // std::vector<ODModel::Vertex> vertices = {
-        //     {{0.0f, -0.5f}},
-        //     {{0.5f, 0.5f}},
-        //     {{-0.5f, 0.5f}}
-        // };
-        std::vector<ODModel::Vertex> vertices{};
-        SierpinskiTriangle(vertices, 5, {-0.5f, 0.5f}, {0.5f, 0.5f}, {0.0f, -0.5f});
+        std::vector<ODModel::Vertex> vertices = {
+            {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        };
+        // std::vector<ODModel::Vertex> vertices{};
+        // SierpinskiTriangle(vertices, 5, {-0.5f, 0.5f}, {0.5f, 0.5f}, {0.0f, -0.5f});
         m_model = std::make_unique<ODModel>(m_device, vertices);
     }
     void App::createPipelineLayout()
@@ -92,7 +92,7 @@ namespace ODEngine {
             renderPassInfo.renderArea.extent = m_swapChain.getSwapChainExtent();
 
             std::array<VkClearValue, 2> clearValues{};
-            clearValues[0].color = {0.085f, 0.05f, 0.05f, 1.0f}; // Clear color; index 0 is the color attachment
+            clearValues[0].color = {0.0075f, 0.0f, 0.0f, 1.0f}; // Clear color; index 0 is the color attachment
             clearValues[1].depthStencil = {1.0f, 0}; // Clear depth; index 1 is the depth attachment
             renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
             renderPassInfo.pClearValues = clearValues.data();
@@ -122,11 +122,13 @@ namespace ODEngine {
             throw std::runtime_error("failed to present swap chain image!");
         }
     }
+    
+    // Recursive function to generate Sierpinski triangle vertices
     void App::SierpinskiTriangle(std::vector<ODModel::Vertex> &vertices, int depth, glm::vec2 top, glm::vec2 left, glm::vec2 right){
         if (depth <= 0) {
-            vertices.push_back({top});
-            vertices.push_back({right});
-            vertices.push_back({left});
+            vertices.push_back({top, glm::vec3(top.x, top.y, top.x)});
+            vertices.push_back({right, glm::vec3(right.x, right.y, right.x)});
+            vertices.push_back({left, glm::vec3(left.x, left.y, left.x)});
         } else {
             auto leftTop = 0.5f * (left + top);
             auto rightTop = 0.5f * (right + top);

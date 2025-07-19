@@ -24,7 +24,7 @@ namespace ODEngine {
     void ODWindow::initWindow() {
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         m_windowPtr = glfwCreateWindow(800, 600, m_windowName.c_str(), nullptr, nullptr);
     }
