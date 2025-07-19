@@ -3,6 +3,8 @@
 // std
 #include <stdexcept>
 #include <array>
+#include <chrono>
+#include <thread>
 
 namespace ODEngine {
     App::App(){
@@ -18,9 +20,9 @@ namespace ODEngine {
     void App::run() {
         while(!m_window.shouldClose()) {
             glfwPollEvents(); 
-            drawFrame();
+            drawFrame();   
         }
-        vkDeviceWaitIdle(m_device.device()); // Ensure all operations are complete before exiting
+        vkDeviceWaitIdle(m_device.device());
     }
     void App::createPipelineLayout(){
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
