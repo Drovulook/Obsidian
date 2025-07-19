@@ -11,7 +11,6 @@ namespace ODEngine {
     struct ODPipelineConfigInfo {
         VkViewport viewport;
         VkRect2D scissor;
-        VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;
         VkPipelineMultisampleStateCreateInfo multisampleInfo;
@@ -36,6 +35,8 @@ namespace ODEngine {
 
             ODPipeline(const ODPipeline&) = delete;
             ODPipeline& operator=(const ODPipeline&) = delete;
+
+            void bind(VkCommandBuffer commandBuffer);
 
             static ODPipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
 
