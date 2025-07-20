@@ -1,5 +1,11 @@
 #include "app.h"
 
+// libs
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE // -> valeur de profondeur de 0 à 1
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+
 // std
 #include <stdexcept>
 #include <array>
@@ -8,8 +14,14 @@
 #include <iostream>
 
 namespace ODEngine {
+    struct SimplePushConstantData {
+        glm::mat2 transform{1.0f};
+        glm::vec2 offset;
+        alignas(16)glm::vec3 color;
+    };
+
     App::App(){
-        loadModels();
+        loadGameObjects();
         createPipelineLayout();
         recreateSwapChain();
         createCommandBuffers(); // Déjà appelé dans recreateSwapChain()
@@ -32,28 +44,54 @@ namespace ODEngine {
     void App::run() {
         while(!m_window.shouldClose()) {
             glfwPollEvents(); 
-            drawFrame();   
+            drawFrame();           
         }
         vkDeviceWaitIdle(m_device.device());
     }
-    void App::loadModels(){
+    void App::loadGameObjects(){
         std::vector<ODModel::Vertex> vertices = {
             {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
             {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
             {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
         };
+        auto model = std::make_shared<ODModel>(m_device, vertices);
+
+        std::vector<glm::vec3> colors{
+            {1.f, .7f, .73f},
+            {1.f, .87f, .73f},
+            {1.f, 1.f, .73f},
+            {.73f, 1.f, .8f},
+            {.73, .88f, 1.f}  
+        };
+          for (auto& color : colors) {
+            color = glm::pow(color, glm::vec3{2.2f});
+        }
         // std::vector<ODModel::Vertex> vertices{};
         // SierpinskiTriangle(vertices, 5, {-0.5f, 0.5f}, {0.5f, 0.5f}, {0.0f, -0.5f});
-        m_model = std::make_unique<ODModel>(m_device, vertices);
+
+        for (int i = 0; i < 40; i++) {
+        auto triangle = ODGameObject::createGameObject();
+        triangle.model = model;
+        triangle.transform2D.scale = glm::vec2(.5f) + i * 0.025f;
+        triangle.transform2D.rotation = i * glm::pi<float>() * .025f;
+        triangle.color = colors[i % colors.size()];
+        m_gameObjects.push_back(std::move(triangle));
+  }
     }
     void App::createPipelineLayout()
     {
+
+        VkPushConstantRange pushConstantRange{};
+        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        pushConstantRange.offset = 0;
+        pushConstantRange.size = sizeof(SimplePushConstantData);
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 0; 
         pipelineLayoutInfo.pSetLayouts = nullptr;
-        pipelineLayoutInfo.pushConstantRangeCount = 0;
-        pipelineLayoutInfo.pPushConstantRanges = nullptr;
+        pipelineLayoutInfo.pushConstantRangeCount = 1;
+        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
         if (vkCreatePipelineLayout(m_device.device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
@@ -140,6 +178,7 @@ namespace ODEngine {
     }
 
     void App::recordCommandBuffer(int imageIndex) {
+
         // Reset le command buffer avant de le réenregistrer
         vkResetCommandBuffer(m_commandBuffers[imageIndex], 0);
         
@@ -177,13 +216,41 @@ namespace ODEngine {
         vkCmdSetViewport(m_commandBuffers[imageIndex], 0, 1, &viewport);
         vkCmdSetScissor(m_commandBuffers[imageIndex], 0, 1, &scissor);
             
-        m_pipeline->bind(m_commandBuffers[imageIndex]);
-        m_model->bind(m_commandBuffers[imageIndex]);
-        m_model->draw(m_commandBuffers[imageIndex]);
+        renderGameObjects(m_commandBuffers[imageIndex]);
+
         vkCmdEndRenderPass(m_commandBuffers[imageIndex]);
 
         if (vkEndCommandBuffer(m_commandBuffers[imageIndex]) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");
+        }
+    }
+
+    void App::renderGameObjects(VkCommandBuffer commandBuffer){
+        
+        int i = 0;
+        for (auto& obj : m_gameObjects) {
+            i += 1;
+            obj.transform2D.rotation = glm::mod(obj.transform2D.rotation + 0.002f * i, glm::two_pi<float>());
+        }
+
+        m_pipeline->bind(commandBuffer);
+        for (auto& obj : m_gameObjects) {
+
+            SimplePushConstantData push{};
+            push.offset = obj.transform2D.translation;
+            push.color = obj.color;
+            push.transform = obj.transform2D.mat2d();
+            
+            vkCmdPushConstants(
+                commandBuffer,
+                m_pipelineLayout,
+                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                0, // offset
+                sizeof(SimplePushConstantData),
+                &push
+            );
+            obj.model->bind(commandBuffer);
+            obj.model->draw(commandBuffer);
         }
     }
 

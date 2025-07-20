@@ -1,10 +1,11 @@
 #pragma once
 
 #include "ODDevice.h"
+#include "ODModel.h"
+#include "ODGameObject.h"
 #include "ODPipeline.h"
 #include "ODSwapChain.h"
 #include "ODWindow.h"
-#include "ODModel.h"
 
 // std
 #include <memory>
@@ -25,7 +26,7 @@ namespace ODEngine {
             virtual void run();
 
         private:
-        void loadModels();
+        void loadGameObjects();
         void createPipelineLayout();
         void createPipeline();
         void createCommandBuffers();
@@ -33,6 +34,7 @@ namespace ODEngine {
         void drawFrame();
         void recreateSwapChain();
         void recordCommandBuffer(int imageIndex);
+        void renderGameObjects(VkCommandBuffer commandBuffer);
 
         void SierpinskiTriangle(
             std::vector<ODModel::Vertex>& vertices, 
@@ -48,7 +50,7 @@ namespace ODEngine {
             std::unique_ptr<ODPipeline> m_pipeline;
             VkPipelineLayout m_pipelineLayout = nullptr;
             std::vector<VkCommandBuffer> m_commandBuffers;
-            std::unique_ptr<ODModel> m_model;
+            std::vector<ODGameObject> m_gameObjects;
 
     };
 
