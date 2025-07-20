@@ -35,7 +35,7 @@ class ODDevice {
 
   // Not copyable or movable
   ODDevice(const ODDevice &) = delete;
-  void operator=(const ODDevice &) = delete;
+  ODDevice &operator=(const ODDevice &) = delete;
   ODDevice(ODDevice &&) = delete;
   ODDevice &operator=(ODDevice &&) = delete;
 

@@ -122,6 +122,18 @@ VkResult ODSwapChain::submitCommandBuffers(
   return result;
 }
 
+void ODSwapChain::waitForImageToBeAvailable(uint32_t imageIndex) {
+  // Attendre que cette image ne soit plus en cours d'utilisation
+  if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+    // Vérifier d'abord si la fence est déjà signalée (non-bloquant)
+    VkResult result = vkGetFenceStatus(device.device(), imagesInFlight[imageIndex]);
+    if (result == VK_NOT_READY) {
+      // Seulement attendre si nécessaire
+      vkWaitForFences(device.device(), 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+    }
+  }
+}
+
 void ODSwapChain::createSwapChain() {
   SwapChainSupportDetails swapChainSupport = device.getSwapChainSupport();
 

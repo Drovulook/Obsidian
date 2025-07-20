@@ -5,16 +5,27 @@
 #include <array>
 #include <chrono>
 #include <thread>
+#include <iostream>
 
 namespace ODEngine {
     App::App(){
         loadModels();
         createPipelineLayout();
-        createPipeline();
-        createCommandBuffers();
+        recreateSwapChain();
+        // createCommandBuffers(); // Déjà appelé dans recreateSwapChain()
     }
 
     App::~App(){
+        // Libérer les command buffers
+        if (!m_commandBuffers.empty()) {
+            vkFreeCommandBuffers(
+                m_device.device(), 
+                m_device.getCommandPool(), 
+                static_cast<uint32_t>(m_commandBuffers.size()), 
+                m_commandBuffers.data()
+            );
+        }
+        
         vkDestroyPipelineLayout(m_device.device(), m_pipelineLayout, nullptr);
     }
 
@@ -50,21 +61,50 @@ namespace ODEngine {
     }
     void App::createPipeline() {
         ODPipelineConfigInfo pipelineConfig{};
-        ODPipeline::defaultPipelineConfigInfo(pipelineConfig, m_swapChain.width(), m_swapChain.height());
-        pipelineConfig.renderPass = m_swapChain.getRenderPass();
+        ODPipeline::defaultPipelineConfigInfo(pipelineConfig, m_swapChain->width(), m_swapChain->height());
+        pipelineConfig.renderPass = m_swapChain->getRenderPass();
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
         m_pipeline = std::make_unique<ODPipeline>(
             m_device, 
-            "engine/shaders/simple_shader.vert.spv", 
-            "engine/shaders/simple_shader.frag.spv",
+            ENGINE_PATH "/shaders/simple_shader.vert.spv", 
+            ENGINE_PATH "/shaders/simple_shader.frag.spv",
             pipelineConfig);
+    }
+
+    void App::recreateSwapChain() {
+        auto extent = m_window.getExtent();
+        while(extent.width == 0 || extent.height == 0) { // si une dimension est nulle, attendre que la fenêtre soit redimensionnée
+            extent = m_window.getExtent();
+            glfwWaitEvents();
+        }
+
+        vkDeviceWaitIdle(m_device.device());
+        
+        // Reset shared pointers pour libérer les ressources
+        m_pipeline.reset();
+        m_swapChain.reset();
+        
+        // Recréer le swap chain
+        m_swapChain = std::make_unique<ODSwapChain>(m_device, extent);
+        createPipeline();
+        createCommandBuffers(); // Recréer les command buffers après avoir recréé le swap chain
     }
 
     void App::createCommandBuffers(){
         
+        // Libérer les anciens command buffers s'ils existent
+        if (!m_commandBuffers.empty()) {
+            vkFreeCommandBuffers(
+                m_device.device(), 
+                m_device.getCommandPool(), 
+                static_cast<uint32_t>(m_commandBuffers.size()), 
+                m_commandBuffers.data()
+            );
+        }
+        
         // Allocate command buffers  
-        m_commandBuffers.resize(m_swapChain.imageCount());
+        m_commandBuffers.resize(m_swapChain->imageCount());
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -75,54 +115,76 @@ namespace ODEngine {
             throw std::runtime_error("failed to allocate command buffers!");
         }
         
-        // Record commands for each command buffer
-        for(int i = 0; i < m_commandBuffers.size(); i++) {
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        // Ne plus pré-enregistrer - sera fait dans drawFrame()
+    }
 
-            if (vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-                throw std::runtime_error("failed to begin recording command buffer!");
-            }
+    void App::recordCommandBuffer(int imageIndex) {
+        // Reset le command buffer avant de le réenregistrer
+        vkResetCommandBuffer(m_commandBuffers[imageIndex], 0);
+        
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = 0; // Command buffer réutilisable
 
-            VkRenderPassBeginInfo renderPassInfo{};
-            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassInfo.renderPass = m_swapChain.getRenderPass();
-            renderPassInfo.framebuffer = m_swapChain.getFrameBuffer(i);
-            renderPassInfo.renderArea.offset = {0, 0};
-            renderPassInfo.renderArea.extent = m_swapChain.getSwapChainExtent();
+        if (vkBeginCommandBuffer(m_commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
+            throw std::runtime_error("failed to begin recording command buffer!");
+        }
 
-            std::array<VkClearValue, 2> clearValues{};
-            clearValues[0].color = {0.0075f, 0.0f, 0.0f, 1.0f}; // Clear color; index 0 is the color attachment
-            clearValues[1].depthStencil = {1.0f, 0}; // Clear depth; index 1 is the depth attachment
-            renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-            renderPassInfo.pClearValues = clearValues.data();
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = m_swapChain->getRenderPass();
+        renderPassInfo.framebuffer = m_swapChain->getFrameBuffer(imageIndex);
+        renderPassInfo.renderArea.offset = {0, 0};
+        renderPassInfo.renderArea.extent = m_swapChain->getSwapChainExtent();
 
-            vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-            m_pipeline->bind(m_commandBuffers[i]);
-            m_model->bind(m_commandBuffers[i]);
-            m_model->draw(m_commandBuffers[i]);
-            vkCmdEndRenderPass(m_commandBuffers[i]);
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {0.0075f, 0.0f, 0.0f, 1.0f}; // Clear color; index 0 is the color attachment
+        clearValues[1].depthStencil = {1.0f, 0}; // Clear depth; index 1 is the depth attachment
+        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        renderPassInfo.pClearValues = clearValues.data();
 
-            if (vkEndCommandBuffer(m_commandBuffers[i]) != VK_SUCCESS) {
-                throw std::runtime_error("failed to record command buffer!");
-            }
+        vkCmdBeginRenderPass(m_commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        m_pipeline->bind(m_commandBuffers[imageIndex]);
+        m_model->bind(m_commandBuffers[imageIndex]);
+        m_model->draw(m_commandBuffers[imageIndex]);
+        vkCmdEndRenderPass(m_commandBuffers[imageIndex]);
+
+        if (vkEndCommandBuffer(m_commandBuffers[imageIndex]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to record command buffer!");
         }
     }
 
     void App::drawFrame(){
         uint32_t imageIndex;
-        auto result = m_swapChain.acquireNextImage(&imageIndex);
+        auto result = m_swapChain->acquireNextImage(&imageIndex);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            recreateSwapChain();
+            return;  
+        }
 
         if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
-
-        result = m_swapChain.submitCommandBuffers(&m_commandBuffers[imageIndex], &imageIndex);
+        
+        // Attendre que cette image soit disponible pour l'enregistrement
+        m_swapChain->waitForImageToBeAvailable(imageIndex);
+        
+        // Enregistrer le command buffer pour cette frame
+        recordCommandBuffer(imageIndex);
+        
+        result = m_swapChain->submitCommandBuffers(&m_commandBuffers[imageIndex], &imageIndex);
+        if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.wasWindowResized()) {
+            m_window.resetWindowResizedFlag();
+            recreateSwapChain();
+            return;
+        }
         if(result != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image!");
         }
     }
     
+
     // Recursive function to generate Sierpinski triangle vertices
     void App::SierpinskiTriangle(std::vector<ODModel::Vertex> &vertices, int depth, glm::vec2 top, glm::vec2 left, glm::vec2 right){
         if (depth <= 0) {

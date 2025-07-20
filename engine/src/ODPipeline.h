@@ -37,6 +37,8 @@ namespace ODEngine {
                 const std::string& fragmentShaderPath,
                 const ODPipelineConfigInfo& configInfo
             );
+            ODPipeline() = default;
+
             ~ODPipeline();
 
             ODPipeline(const ODPipeline&) = delete;

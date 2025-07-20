@@ -95,6 +95,11 @@ target_include_directories(ObsidianEngine PUBLIC
     engine/src                # Engine source directory
 )
 
+# Define engine path macro for shader loading
+target_compile_definitions(ObsidianEngine PRIVATE
+    ENGINE_PATH="${CMAKE_SOURCE_DIR}/engine"
+)
+
 target_link_libraries(ObsidianEngine PUBLIC
     ${Vulkan_LIBRARIES}
     glfw

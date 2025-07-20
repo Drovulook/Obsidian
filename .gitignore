@@ -3,7 +3,7 @@ build/
 bin/
 
 # Libraries (trop lourdes pour Git)
-engine/libraries/
+Libraries/
 
 # Vulkan SDK config (spécifique à chaque machine)
 .env

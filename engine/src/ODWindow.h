@@ -17,14 +17,19 @@ namespace ODEngine {
 
             bool shouldClose() const { return glfwWindowShouldClose(m_windowPtr); }
             VkExtent2D getExtent() { return {static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)}; }
+            bool wasWindowResized() { return m_frameBufferResized; }
+            void resetWindowResizedFlag() { m_frameBufferResized = false; }
 
             void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
             
         private:
+            static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
             void initWindow();
-            
-            const int m_width;
-            const int m_height;
+        
+            private:
+            int m_width;
+            int m_height;
+            bool m_frameBufferResized = false;
 
             std::string m_windowName;
 

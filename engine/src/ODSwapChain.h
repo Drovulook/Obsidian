@@ -19,7 +19,7 @@ class ODSwapChain {
   ~ODSwapChain();
 
   ODSwapChain(const ODSwapChain &) = delete;
-  void operator=(const ODSwapChain &) = delete;
+  ODSwapChain &operator=(const ODSwapChain &) = delete;
 
   VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
   VkRenderPass getRenderPass() { return renderPass; }
@@ -37,6 +37,7 @@ class ODSwapChain {
 
   VkResult acquireNextImage(uint32_t *imageIndex);
   VkResult submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
+  void waitForImageToBeAvailable(uint32_t imageIndex);
 
  private:
   void createSwapChain();

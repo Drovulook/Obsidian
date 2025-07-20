@@ -30,6 +30,8 @@ namespace ODEngine {
         void createPipeline();
         void createCommandBuffers();
         void drawFrame();
+        void recreateSwapChain();
+        void recordCommandBuffer(int imageIndex);
 
         void SierpinskiTriangle(
             std::vector<ODModel::Vertex>& vertices, 
@@ -41,7 +43,7 @@ namespace ODEngine {
         private:
             ODWindow m_window{WIDTH, HEIGHT, "Obsidian Engine"};
             ODDevice m_device{m_window};
-            ODSwapChain m_swapChain{m_device, m_window.getExtent()};
+            std::unique_ptr<ODSwapChain> m_swapChain;
             std::unique_ptr<ODPipeline> m_pipeline;
             VkPipelineLayout m_pipelineLayout = nullptr;
             std::vector<VkCommandBuffer> m_commandBuffers;

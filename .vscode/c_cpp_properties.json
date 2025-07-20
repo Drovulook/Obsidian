@@ -15,7 +15,8 @@
                 "_UNICODE",
                 "GLFW_INCLUDE_VULKAN",
                 "GLM_FORCE_RADIANS",
-                "GLM_FORCE_DEPTH_ZERO_TO_ONE"
+                "GLM_FORCE_DEPTH_ZERO_TO_ONE",
+                "ENGINE_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/engine\""
             ],
             "windowsSdkVersion": "10.0.22621.0",
             "compilerPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.37.32822/bin/Hostx64/x64/cl.exe",
