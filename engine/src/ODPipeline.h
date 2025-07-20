@@ -14,8 +14,6 @@ namespace ODEngine {
         ODPipelineConfigInfo(const ODPipelineConfigInfo&) = delete;
         ODPipelineConfigInfo& operator=(const ODPipelineConfigInfo&) = delete;
 
-        VkViewport viewport;
-        VkRect2D scissor;
         VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;
@@ -23,6 +21,8 @@ namespace ODEngine {
         VkPipelineColorBlendAttachmentState colorBlendAttachment;
         VkPipelineColorBlendStateCreateInfo colorBlendInfo;
         VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
+        std::vector<VkDynamicState> dynamicStateEnables;
+        VkPipelineDynamicStateCreateInfo dynamicStateInfo;
         VkPipelineLayout pipelineLayout = nullptr;
         VkRenderPass renderPass = nullptr;
         uint32_t subpass = 0;
@@ -46,7 +46,7 @@ namespace ODEngine {
 
             void bind(VkCommandBuffer commandBuffer);
 
-            static void defaultPipelineConfigInfo(ODPipelineConfigInfo& configInfo, uint32_t width, uint32_t height);
+            static void defaultPipelineConfigInfo(ODPipelineConfigInfo& configInfo);
 
         private:
             static std::vector<char> readFile(const std::string& filename);

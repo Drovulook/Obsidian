@@ -12,7 +12,7 @@ namespace ODEngine {
         loadModels();
         createPipelineLayout();
         recreateSwapChain();
-        // createCommandBuffers(); // Déjà appelé dans recreateSwapChain()
+        createCommandBuffers(); // Déjà appelé dans recreateSwapChain()
     }
 
     App::~App(){
@@ -60,8 +60,13 @@ namespace ODEngine {
         }
     }
     void App::createPipeline() {
+        assert(m_swapChain != nullptr && "Swap chain must be initialized before creating the pipeline");
+        assert(m_pipelineLayout != nullptr && "Pipeline layout must be created before creating the pipeline");
+
+        m_pipeline.reset();
+
         ODPipelineConfigInfo pipelineConfig{};
-        ODPipeline::defaultPipelineConfigInfo(pipelineConfig, m_swapChain->width(), m_swapChain->height());
+        ODPipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = m_swapChain->getRenderPass();
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
@@ -80,15 +85,21 @@ namespace ODEngine {
         }
 
         vkDeviceWaitIdle(m_device.device());
-        
+
         // Reset shared pointers pour libérer les ressources
-        m_pipeline.reset();
-        m_swapChain.reset();
+        // m_swapChain.reset();
         
         // Recréer le swap chain
-        m_swapChain = std::make_unique<ODSwapChain>(m_device, extent);
-        createPipeline();
-        createCommandBuffers(); // Recréer les command buffers après avoir recréé le swap chain
+        if (m_swapChain == nullptr) {
+            m_swapChain = std::make_unique<ODSwapChain>(m_device, extent);
+        } else {
+            m_swapChain = std::make_unique<ODSwapChain>(m_device, extent, std::move(m_swapChain));
+            if(m_swapChain->imageCount() != m_commandBuffers.size()) {
+                freeCommandBuffers();
+                createCommandBuffers();
+            }
+        }
+        createPipeline(); // optimisation potentielle: ne rien faire si render pass compatible
     }
 
     void App::createCommandBuffers(){
@@ -118,6 +129,16 @@ namespace ODEngine {
         // Ne plus pré-enregistrer - sera fait dans drawFrame()
     }
 
+    void App::freeCommandBuffers(){
+        vkFreeCommandBuffers(
+            m_device.device(), 
+            m_device.getCommandPool(), 
+            static_cast<uint32_t>(m_commandBuffers.size()), 
+            m_commandBuffers.data()
+        );
+        m_commandBuffers.clear();
+    }
+
     void App::recordCommandBuffer(int imageIndex) {
         // Reset le command buffer avant de le réenregistrer
         vkResetCommandBuffer(m_commandBuffers[imageIndex], 0);
@@ -144,6 +165,18 @@ namespace ODEngine {
         renderPassInfo.pClearValues = clearValues.data();
 
         vkCmdBeginRenderPass(m_commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+         
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = static_cast<float>(m_swapChain->getSwapChainExtent().width);
+        viewport.height = static_cast<float>(m_swapChain->getSwapChainExtent().height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        VkRect2D scissor{{0, 0}, m_swapChain->getSwapChainExtent()};
+        vkCmdSetViewport(m_commandBuffers[imageIndex], 0, 1, &viewport);
+        vkCmdSetScissor(m_commandBuffers[imageIndex], 0, 1, &scissor);
+            
         m_pipeline->bind(m_commandBuffers[imageIndex]);
         m_model->bind(m_commandBuffers[imageIndex]);
         m_model->draw(m_commandBuffers[imageIndex]);

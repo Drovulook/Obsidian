@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 
 // std lib headers
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,8 @@ class ODSwapChain {
   static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
   ODSwapChain(ODDevice &deviceRef, VkExtent2D windowExtent);
+  ODSwapChain(ODDevice &deviceRef, VkExtent2D windowExtent, std::shared_ptr<ODSwapChain> previous);
+
   ~ODSwapChain();
 
   ODSwapChain(const ODSwapChain &) = delete;
@@ -40,6 +43,7 @@ class ODSwapChain {
   void waitForImageToBeAvailable(uint32_t imageIndex);
 
  private:
+ void init();
   void createSwapChain();
   void createImageViews();
   void createDepthResources();
@@ -70,6 +74,7 @@ class ODSwapChain {
   VkExtent2D windowExtent;
 
   VkSwapchainKHR swapChain;
+  std::shared_ptr<ODSwapChain> oldSwapChain;
 
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
