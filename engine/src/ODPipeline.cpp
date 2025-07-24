@@ -49,7 +49,7 @@ namespace ODEngine {
             configInfo.renderPass != nullptr &&
             "Cannot create graphics pipeline: no renderPass provided in config info");
         
-            auto vertexCode = readFile(vertexShaderPath);
+        auto vertexCode = readFile(vertexShaderPath);
         auto fragmentCode = readFile(fragmentShaderPath);
 
         createShaderModule(vertexCode, m_vertShaderModule);
