@@ -45,18 +45,9 @@ namespace ODEngine {
 
     void ODRenderer::createCommandBuffers()
     {
-        // Libérer les anciens command buffers s'ils existent
-        if (!m_commandBuffers.empty()) {
-            vkFreeCommandBuffers(
-                m_device.device(), 
-                m_device.getCommandPool(), 
-                static_cast<uint32_t>(m_commandBuffers.size()), 
-                m_commandBuffers.data()
-            );
-        }
         
         // Allocate command buffers  
-        m_commandBuffers.resize(m_swapChain->imageCount());
+        m_commandBuffers.resize(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;

@@ -24,7 +24,7 @@ namespace ODEngine {
             
             VkCommandBuffer getCurrentCommandBuffer() const {
                 assert (m_isFrameStarted && "Cannot get command buffer when frame is not in progress!");
-                return m_commandBuffers[m_currentImageIndex];
+                return m_commandBuffers[m_currentFrameIndex];
             }
             VkRenderPass getSwapChainRenderPass() const {
                 return m_swapChain->getRenderPass();
@@ -51,7 +51,7 @@ namespace ODEngine {
             std::vector<VkCommandBuffer> m_commandBuffers;
 
             uint32_t m_currentImageIndex = 0;
-            int m_currentFrameIndex;
+            int m_currentFrameIndex = 0;
             bool m_isFrameStarted = false;
 
     };
