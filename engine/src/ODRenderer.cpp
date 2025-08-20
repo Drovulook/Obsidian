@@ -7,6 +7,39 @@
 #include <thread>
 #include <iostream>
 
+namespace {
+    const char* vkResultToString(VkResult result) {
+        switch(result) {
+            case VK_SUCCESS: return "VK_SUCCESS";
+            case VK_NOT_READY: return "VK_NOT_READY";
+            case VK_TIMEOUT: return "VK_TIMEOUT";
+            case VK_EVENT_SET: return "VK_EVENT_SET";
+            case VK_EVENT_RESET: return "VK_EVENT_RESET";
+            case VK_INCOMPLETE: return "VK_INCOMPLETE";
+            case VK_ERROR_OUT_OF_HOST_MEMORY: return "VK_ERROR_OUT_OF_HOST_MEMORY";
+            case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "VK_ERROR_OUT_OF_DEVICE_MEMORY";
+            case VK_ERROR_INITIALIZATION_FAILED: return "VK_ERROR_INITIALIZATION_FAILED";
+            case VK_ERROR_DEVICE_LOST: return "VK_ERROR_DEVICE_LOST";
+            case VK_ERROR_MEMORY_MAP_FAILED: return "VK_ERROR_MEMORY_MAP_FAILED";
+            case VK_ERROR_LAYER_NOT_PRESENT: return "VK_ERROR_LAYER_NOT_PRESENT";
+            case VK_ERROR_EXTENSION_NOT_PRESENT: return "VK_ERROR_EXTENSION_NOT_PRESENT";
+            case VK_ERROR_FEATURE_NOT_PRESENT: return "VK_ERROR_FEATURE_NOT_PRESENT";
+            case VK_ERROR_INCOMPATIBLE_DRIVER: return "VK_ERROR_INCOMPATIBLE_DRIVER";
+            case VK_ERROR_TOO_MANY_OBJECTS: return "VK_ERROR_TOO_MANY_OBJECTS";
+            case VK_ERROR_FORMAT_NOT_SUPPORTED: return "VK_ERROR_FORMAT_NOT_SUPPORTED";
+            case VK_ERROR_FRAGMENTED_POOL: return "VK_ERROR_FRAGMENTED_POOL";
+            case VK_ERROR_SURFACE_LOST_KHR: return "VK_ERROR_SURFACE_LOST_KHR";
+            case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR: return "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR";
+            case VK_SUBOPTIMAL_KHR: return "VK_SUBOPTIMAL_KHR";
+            case VK_ERROR_OUT_OF_DATE_KHR: return "VK_ERROR_OUT_OF_DATE_KHR";
+            case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR: return "VK_ERROR_INCOMPATIBLE_DISPLAY_KHR";
+            case VK_ERROR_VALIDATION_FAILED_EXT: return "VK_ERROR_VALIDATION_FAILED_EXT";
+            case VK_ERROR_INVALID_SHADER_NV: return "VK_ERROR_INVALID_SHADER_NV";
+            default: return "VK_RESULT_UNKNOWN";
+        }
+    }
+}
+
 namespace ODEngine {
 
     ODRenderer::ODRenderer(ODWindow& window, ODDevice& device)
@@ -43,8 +76,7 @@ namespace ODEngine {
         }
     }
 
-    void ODRenderer::createCommandBuffers()
-    {
+    void ODRenderer::createCommandBuffers(){
         
         // Allocate command buffers  
         m_commandBuffers.resize(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -95,7 +127,7 @@ namespace ODEngine {
         
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = 0; // Command buffer réutilisable
+        // beginInfo.flags = 0; // Command buffer réutilisable
 
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to begin recording command buffer!");
@@ -116,11 +148,10 @@ namespace ODEngine {
         if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.wasWindowResized()) {
             m_window.resetWindowResizedFlag();
             recreateSwapChain();
-        }
-        if(result != VK_SUCCESS) {
+        } else if (result != VK_SUCCESS) { // Ne lancer l'exception que pour les autres erreurs réelles
+            std::cerr << "vkQueuePresentKHR returned: " << vkResultToString(result) << " (" << (int)result << ")" << std::endl;
             throw std::runtime_error("failed to present swap chain image!");
         }
-
 
         m_isFrameStarted = false;
         m_currentFrameIndex = (m_currentFrameIndex + 1) % ODSwapChain::MAX_FRAMES_IN_FLIGHT;

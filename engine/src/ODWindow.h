@@ -19,6 +19,7 @@ namespace ODEngine {
             VkExtent2D getExtent() { return {static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)}; }
             bool wasWindowResized() { return m_frameBufferResized; }
             void resetWindowResizedFlag() { m_frameBufferResized = false; }
+            GLFWwindow* getGLFWWindow() const { return m_windowPtr; }
 
             void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
             

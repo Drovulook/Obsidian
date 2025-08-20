@@ -30,6 +30,8 @@ namespace ODEngine {
                 return m_swapChain->getRenderPass();
             }
 
+            float getAspectRatio() const { return m_swapChain->extentAspectRatio(); }
+
             int getCurrentFrameIndex() const { 
                 assert(m_isFrameStarted && "Cannot get current frame index when frame is not in progress!");
                 return m_currentFrameIndex; }
@@ -50,8 +52,8 @@ namespace ODEngine {
             std::unique_ptr<ODSwapChain> m_swapChain;
             std::vector<VkCommandBuffer> m_commandBuffers;
 
-            uint32_t m_currentImageIndex = 0;
-            int m_currentFrameIndex = 0;
+            uint32_t m_currentImageIndex;
+            int m_currentFrameIndex{0};
             bool m_isFrameStarted = false;
 
     };

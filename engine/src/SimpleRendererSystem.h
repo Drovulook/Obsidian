@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ODCamera.h"
 #include "ODDevice.h"
 #include "ODModel.h"
 #include "ODGameObject.h"
@@ -19,7 +20,7 @@ namespace ODEngine {
             SimpleRendererSystem(const SimpleRendererSystem&) = delete;
             SimpleRendererSystem& operator=(const SimpleRendererSystem&) = delete;
             
-            void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ODGameObject>& gameObjects);
+            void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ODGameObject>& gameObjects, const ODCamera& camera);
 
         private:
             void createPipelineLayout();
