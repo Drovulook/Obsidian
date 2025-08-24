@@ -4,7 +4,8 @@
 
 namespace ODEngine {
     
-    SandboxApp::SandboxApp() {
+    SandboxApp::SandboxApp()
+        : App(std::string("sandbox/models/smooth_vase.obj")) {
     }
 
     SandboxApp::~SandboxApp() {

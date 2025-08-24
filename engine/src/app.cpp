@@ -19,7 +19,7 @@
 
 namespace ODEngine {
 
-    App::App(){
+    App::App(const std::string& modelPath) : m_modelPath(modelPath) {
         loadGameObjects();
     }
 
@@ -61,74 +61,14 @@ namespace ODEngine {
         }
         vkDeviceWaitIdle(m_device.device());
     }
-    
-    std::unique_ptr<ODModel> createCubeModel(ODDevice& device, glm::vec3 offset) {
-        std::vector<ODModel::Vertex> vertices{
- 
-        // left face (white)
-        {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
-        {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
-        {{-.5f, -.5f, .5f}, {.9f, .9f, .9f}},
-        {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
-        {{-.5f, .5f, -.5f}, {.9f, .9f, .9f}},
-        {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
-
-        // right face (yellow)
-        {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
-        {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
-        {{.5f, -.5f, .5f}, {.8f, .8f, .1f}},
-        {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
-        {{.5f, .5f, -.5f}, {.8f, .8f, .1f}},
-        {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
-
-        // top face (orange, remember y axis points down)
-        {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
-        {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
-        {{-.5f, -.5f, .5f}, {.9f, .6f, .1f}},
-        {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
-        {{.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
-        {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
-
-        // bottom face (red)
-        {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
-        {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
-        {{-.5f, .5f, .5f}, {.8f, .1f, .1f}},
-        {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
-        {{.5f, .5f, -.5f}, {.8f, .1f, .1f}},
-        {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
-
-        // nose face (blue)
-        {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
-        {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
-        {{-.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
-        {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
-        {{.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
-        {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
-
-        // tail face (green)
-        {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
-        {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
-        {{-.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
-        {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
-        {{.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
-        {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
-
-        };
-
-        for (auto& v : vertices) {
-            v.position += offset;
-        }
-
-        return std::make_unique<ODModel>(device, vertices);
-    }
 
     void App::loadGameObjects(){
-        std::shared_ptr<ODModel> cubeModel = createCubeModel(m_device, glm::vec3(0.0f, 0.0f, 0.0f));
-        auto cube = ODGameObject::createGameObject();
-        cube.model = cubeModel;
-        cube.transform.translation = glm::vec3(0.0f, 0.0f, 2.5f);
-        cube.transform.scale = glm::vec3(0.5f, 0.5f, 0.5f);
-        m_gameObjects.push_back(std::move(cube));
+        std::shared_ptr<ODModel> odModel = ODModel::createModelFromFile(m_device, m_modelPath);
+        auto gameObject = ODGameObject::createGameObject();
+        gameObject.model = odModel;
+        gameObject.transform.translation = glm::vec3(0.0f, 0.0f, 2.5f);
+        gameObject.transform.scale = glm::vec3(2.f, 2.f, 2.f);
+        m_gameObjects.push_back(std::move(gameObject));
     }
 
 }

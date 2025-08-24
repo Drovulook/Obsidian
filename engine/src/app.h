@@ -17,6 +17,7 @@ namespace ODEngine {
             static constexpr int HEIGHT = 700;
 
             App();
+            explicit App(const std::string& modelPath);
             virtual ~App();
 
             App(const App&) = delete;
@@ -32,6 +33,8 @@ namespace ODEngine {
             ODDevice m_device{m_window};
             ODRenderer m_renderer{m_window, m_device};
             std::vector<ODGameObject> m_gameObjects;
+
+            std::string m_modelPath;
 
     };
 

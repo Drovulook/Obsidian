@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 
 // std
+#include<memory>
 #include <vector>
 
 namespace ODEngine {
@@ -15,30 +16,52 @@ namespace ODEngine {
         public:
 
         struct Vertex {
-            glm::vec3 position;
-            glm::vec3 color;
+            glm::vec3 position{};
+            glm::vec3 color{};
+            glm::vec3 normals{};
+            glm::vec2 uv{};
 
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
             static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+
+            bool operator== (const Vertex& other) const {
+                return position == other.position && color == other.color && normals == other.normals && uv == other.uv;
+            }
+        };
+        
+        struct Builder {
+            std::vector<Vertex> vertices{};
+            std::vector<uint32_t> indices{};
+
+            void loadModels(const std::string& filepath);
         };
 
-        ODModel(ODDevice& device, const std::vector<Vertex>& vertices);
+        ODModel(ODDevice& device, const ODModel::Builder& builder);
         ~ODModel();
         
         ODModel(const ODModel&) = delete;
         ODModel& operator=(const ODModel&) = delete;
+
+        static std::unique_ptr<ODModel> createModelFromFile(ODDevice& device, const std::string& filepath);
 
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
 
         private:
         void createVertexBuffer(const std::vector<Vertex>& vertices);
+        void createIndexBuffer(const std::vector<uint32_t>& indices);
 
         private:
             ODDevice& m_device;
+
             VkBuffer m_vertexBuffer;
             VkDeviceMemory m_vertexBufferMemory;
             uint32_t m_vertexCount;
+
+            bool m_hasIndexBuffer = false;
+            VkBuffer m_indexBuffer;
+            VkDeviceMemory m_indexBufferMemory;
+            uint32_t m_indexCount;
 
     };
 }
