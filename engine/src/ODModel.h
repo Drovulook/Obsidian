@@ -18,14 +18,14 @@ namespace ODEngine {
         struct Vertex {
             glm::vec3 position{};
             glm::vec3 color{};
-            glm::vec3 normals{};
+            glm::vec3 normal{};
             glm::vec2 uv{};
 
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
             static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
 
             bool operator== (const Vertex& other) const {
-                return position == other.position && color == other.color && normals == other.normals && uv == other.uv;
+                return position == other.position && color == other.color && normal == other.normal && uv == other.uv;
             }
         };
         

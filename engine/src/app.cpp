@@ -50,7 +50,7 @@ namespace ODEngine {
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
             float aspect = m_renderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 10.0f);
+            camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
             
             if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
@@ -64,11 +64,16 @@ namespace ODEngine {
 
     void App::loadGameObjects(){
         std::shared_ptr<ODModel> odModel = ODModel::createModelFromFile(m_device, m_modelPath);
-        auto gameObject = ODGameObject::createGameObject();
-        gameObject.model = odModel;
-        gameObject.transform.translation = glm::vec3(0.0f, 0.0f, 2.5f);
-        gameObject.transform.scale = glm::vec3(2.f, 2.f, 2.f);
-        m_gameObjects.push_back(std::move(gameObject));
+        
+        for(int i = 0; i < 10; i++) {
+            for(int k = 0; k < 10; k++) {
+                auto gameObject = ODGameObject::createGameObject();
+                gameObject.model = odModel;
+                gameObject.transform.translation = glm::vec3((float)i, 1.0f, (float)k);
+                gameObject.transform.scale = glm::vec3(2.f, 1.f, 2.f);
+                m_gameObjects.push_back(std::move(gameObject));
+            }
+        }
     }
 
 }

@@ -16,7 +16,8 @@
 namespace ODEngine {
     struct SimplePushConstantData {
         glm::mat4 transform{1.0f};
-        alignas(16)glm::vec3 color;
+        glm::mat4 normalMatrix{1.0f};
+        // alignas(16)glm::vec3 color;
     };
 
     SimpleRendererSystem::SimpleRendererSystem(ODDevice& device, VkRenderPass renderPass) : m_device(device) {
@@ -74,9 +75,9 @@ namespace ODEngine {
         for (auto& obj : gameObjects) {
 
             SimplePushConstantData push{};
-            push.color = obj.color;
             push.transform = projectionView * obj.transform.mat4();
-            
+            push.normalMatrix = obj.transform.normalMatrix();
+
             vkCmdPushConstants(
                 commandBuffer,
                 m_pipelineLayout,

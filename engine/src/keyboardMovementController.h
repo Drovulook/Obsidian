@@ -22,7 +22,7 @@ namespace ODEngine {
         void MoveInPlaneXZ(GLFWwindow* window, float dt, ODGameObject& gameObject);
 
         KeyMappings keys{};
-        float m_moveSpeed = 3.5f;
-        float m_lookSpeed = 2.0f;
+        float m_moveSpeed = 2.5f;
+        float m_lookSpeed = 1.5f;
     };
 }
