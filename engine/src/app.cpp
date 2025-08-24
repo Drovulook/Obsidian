@@ -3,6 +3,7 @@
 #include "keyboardMovementController.h"
 #include "ODCamera.h"
 #include "SimpleRendererSystem.h"
+#include "ODBuffer.h"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -19,6 +20,11 @@
 
 namespace ODEngine {
 
+    struct GlobalUbo {
+        glm::mat4 projectionView{1.f};
+        glm::vec3 lightDirection = glm::vec3(1.f, -3.f, -1.f);
+    };
+
     App::App(const std::string& modelPath) : m_modelPath(modelPath) {
         loadGameObjects();
     }
@@ -28,6 +34,17 @@ namespace ODEngine {
     }
 
     void App::run() {
+
+        ODBuffer globalUboBuffer{
+            m_device,
+            sizeof(GlobalUbo),
+            ODSwapChain::MAX_FRAMES_IN_FLIGHT,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+            m_device.properties.limits.minUniformBufferOffsetAlignment
+        };
+        globalUboBuffer.map();
+
         SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass());
         ODCamera camera{};
         camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
@@ -53,8 +70,24 @@ namespace ODEngine {
             camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
             
             if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
+                int frameIndex = m_renderer.getCurrentFrameIndex();
+                
+                // update
+                GlobalUbo ubo{};
+                ubo.projectionView = camera.getProjection() * camera.getView();
+                globalUboBuffer.writeToIndex(&ubo, frameIndex);
+                globalUboBuffer.flushIndex(frameIndex);
+
+                FrameInfo frameInfo{
+                    frameIndex,
+                    deltaTime,
+                    commandBuffer,
+                    camera
+                };
+
+                // render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRendererSystem.renderGameObjects(commandBuffer, m_gameObjects, camera);
+                simpleRendererSystem.renderGameObjects(frameInfo, m_gameObjects);
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }

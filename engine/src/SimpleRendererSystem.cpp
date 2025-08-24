@@ -66,11 +66,11 @@ namespace ODEngine {
             pipelineConfig);
     }
 
-    void SimpleRendererSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ODGameObject>& gameObjects, const ODCamera& camera){
+    void SimpleRendererSystem::renderGameObjects(FrameInfo& frameInfo, std::vector<ODGameObject>& gameObjects){
         
-        auto projectionView = camera.getProjection() * camera.getView();
+        auto projectionView = frameInfo.camera.getProjection() * frameInfo.camera.getView();
 
-        m_pipeline->bind(commandBuffer);
+        m_pipeline->bind(frameInfo.commandBuffer);
         
         for (auto& obj : gameObjects) {
 
@@ -79,15 +79,15 @@ namespace ODEngine {
             push.normalMatrix = obj.transform.normalMatrix();
 
             vkCmdPushConstants(
-                commandBuffer,
+                frameInfo.commandBuffer,
                 m_pipelineLayout,
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                 0, // offset
                 sizeof(SimplePushConstantData),
                 &push
             );
-            obj.model->bind(commandBuffer);
-            obj.model->draw(commandBuffer);
+            obj.model->bind(frameInfo.commandBuffer);
+            obj.model->draw(frameInfo.commandBuffer);
         }
     }
 

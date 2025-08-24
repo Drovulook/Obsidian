@@ -5,6 +5,7 @@
 #include "ODModel.h"
 #include "ODGameObject.h"
 #include "ODPipeline.h"
+#include "ODFrameInfo.h"
 
 // std
 #include <memory>
@@ -20,7 +21,7 @@ namespace ODEngine {
             SimpleRendererSystem(const SimpleRendererSystem&) = delete;
             SimpleRendererSystem& operator=(const SimpleRendererSystem&) = delete;
             
-            void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<ODGameObject>& gameObjects, const ODCamera& camera);
+            void renderGameObjects(FrameInfo& frameInfo, std::vector<ODGameObject>& gameObjects);
 
         private:
             void createPipelineLayout();

@@ -32,46 +32,35 @@ namespace ODEngine {
        createIndexBuffer(builder.indices);
     }
 
-    ODModel::~ODModel(){
-        vkDestroyBuffer(m_device.device(), m_vertexBuffer, nullptr);
-        vkFreeMemory(m_device.device(), m_vertexBufferMemory, nullptr);
-
-        if(m_hasIndexBuffer){
-            vkDestroyBuffer(m_device.device(), m_indexBuffer, nullptr);
-            vkFreeMemory(m_device.device(), m_indexBufferMemory, nullptr);
-        }
-    }
+    ODModel::~ODModel(){}
 
     void ODModel::createVertexBuffer(const std::vector<Vertex> &vertices){
         m_vertexCount = static_cast<uint32_t>(vertices.size());
         assert(m_vertexCount >= 3 && "Vertex count must be at least 3 for a valid model.");
         VkDeviceSize bufferSize = sizeof(vertices[0]) * m_vertexCount;
-        
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        m_device.createBuffer(
-            bufferSize,
+        uint32_t vertexSize = sizeof(vertices[0]);
+
+        ODBuffer stagingBuffer{
+            m_device,
+            vertexSize,
+            m_vertexCount,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            stagingBuffer,
-            stagingBufferMemory);
+        };
+        
+       stagingBuffer.map();
+       stagingBuffer.writeToBuffer((void*)vertices.data());
 
-        void *data;
-        vkMapMemory(m_device.device(), stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
-        vkUnmapMemory(m_device.device(), stagingBufferMemory);
-
-        m_device.createBuffer(
-            bufferSize,
+       m_vertexBuffer = std::make_unique<ODBuffer>(
+            m_device,
+            vertexSize,
+            m_vertexCount,
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            m_vertexBuffer,
-            m_vertexBufferMemory);
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
 
-        m_device.copyBuffer(stagingBuffer, m_vertexBuffer, bufferSize);
+        m_device.copyBuffer(stagingBuffer.getBuffer(), m_vertexBuffer->getBuffer(), bufferSize);
 
-        vkDestroyBuffer(m_device.device(), stagingBuffer, nullptr);
-        vkFreeMemory(m_device.device(), stagingBufferMemory, nullptr);
     }
 
     void ODModel::createIndexBuffer(const std::vector<uint32_t> &indices){
@@ -83,32 +72,28 @@ namespace ODEngine {
         }
 
         VkDeviceSize bufferSize = sizeof(indices[0]) * m_indexCount;
-        
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        m_device.createBuffer(
-            bufferSize,
+        uint32_t indexSize = sizeof(indices[0]);
+
+        ODBuffer stagingBuffer{
+            m_device,
+            indexSize,
+            m_indexCount,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            stagingBuffer,
-            stagingBufferMemory);
+        };
+        
+        stagingBuffer.map();
+        stagingBuffer.writeToBuffer((void*)indices.data());
 
-        void *data;
-        vkMapMemory(m_device.device(), stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
-        vkUnmapMemory(m_device.device(), stagingBufferMemory);
-
-        m_device.createBuffer(
-            bufferSize,
+        m_indexBuffer = std::make_unique<ODBuffer>(
+            m_device,
+            indexSize,
+            m_indexCount,
             VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            m_indexBuffer,
-            m_indexBufferMemory);
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
 
-        m_device.copyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
-
-        vkDestroyBuffer(m_device.device(), stagingBuffer, nullptr);
-        vkFreeMemory(m_device.device(), stagingBufferMemory, nullptr);
+        m_device.copyBuffer(stagingBuffer.getBuffer(), m_indexBuffer->getBuffer(), bufferSize);
     }
 
     void ODModel::draw(VkCommandBuffer commandBuffer){
@@ -128,12 +113,12 @@ namespace ODEngine {
 
     void ODModel::bind(VkCommandBuffer commandBuffer)
     {
-        VkBuffer buffers[] = {m_vertexBuffer};
+        VkBuffer buffers[] = {m_vertexBuffer->getBuffer()};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets); // record 1 vertex buffer at binding 0
 
         if(m_hasIndexBuffer) {
-            vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
         }
     }
 

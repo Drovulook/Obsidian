@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ODBuffer.h"
 #include "ODDevice.h"
 
 // libs
@@ -54,13 +55,11 @@ namespace ODEngine {
         private:
             ODDevice& m_device;
 
-            VkBuffer m_vertexBuffer;
-            VkDeviceMemory m_vertexBufferMemory;
+            std::unique_ptr<ODBuffer> m_vertexBuffer;
             uint32_t m_vertexCount;
 
             bool m_hasIndexBuffer = false;
-            VkBuffer m_indexBuffer;
-            VkDeviceMemory m_indexBufferMemory;
+            std::unique_ptr<ODBuffer> m_indexBuffer;
             uint32_t m_indexCount;
 
     };
