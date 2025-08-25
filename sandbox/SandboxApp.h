@@ -10,6 +10,9 @@ namespace ODEngine {
 
         void run() override;
 
+    protected:
+        void loadGameObjects() override;
+
     private:
         
     };

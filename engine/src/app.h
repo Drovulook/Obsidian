@@ -5,6 +5,7 @@
 #include "ODGameObject.h"
 #include "ODWindow.h"
 #include "ODRenderer.h"
+#include "ODDescriptors.h"
 
 // std
 #include <memory>
@@ -17,7 +18,6 @@ namespace ODEngine {
             static constexpr int HEIGHT = 700;
 
             App();
-            explicit App(const std::string& modelPath);
             virtual ~App();
 
             App(const App&) = delete;
@@ -25,16 +25,20 @@ namespace ODEngine {
 
             virtual void run();
 
+        protected:
+            std::shared_ptr<ODModel> createModelFromFile(const std::string& modelPath);
+
         private:
-        void loadGameObjects();
+            virtual void loadGameObjects() = 0;
 
         private:
             ODWindow m_window{WIDTH, HEIGHT, "Obsidian Engine"};
             ODDevice m_device{m_window};
             ODRenderer m_renderer{m_window, m_device};
-            std::vector<ODGameObject> m_gameObjects;
+            std::unique_ptr<ODDescriptorPool> m_globalDescriptorPool{};
 
-            std::string m_modelPath;
+        protected:
+            std::vector<ODGameObject> m_gameObjects;
 
     };
 

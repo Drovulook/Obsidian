@@ -25,8 +25,8 @@ namespace ODEngine {
         glm::vec3 lightDirection = glm::vec3(1.f, -3.f, -1.f);
     };
 
-    App::App(const std::string& modelPath) : m_modelPath(modelPath) {
-        loadGameObjects();
+    App::App() {
+
     }
 
     App::~App(){
@@ -35,15 +35,18 @@ namespace ODEngine {
 
     void App::run() {
 
-        ODBuffer globalUboBuffer{
-            m_device,
-            sizeof(GlobalUbo),
-            ODSwapChain::MAX_FRAMES_IN_FLIGHT,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-            m_device.properties.limits.minUniformBufferOffsetAlignment
-        };
-        globalUboBuffer.map();
+        std::vector<std::unique_ptr<ODBuffer>> uboBuffers(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for(int i=0; i < uboBuffers.size(); i++) {
+            uboBuffers[i] = std::make_unique<ODBuffer>(
+                m_device,
+                sizeof(GlobalUbo),
+                1,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+            );
+            uboBuffers[i]->map();
+        }
+
 
         SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass());
         ODCamera camera{};
@@ -75,8 +78,8 @@ namespace ODEngine {
                 // update
                 GlobalUbo ubo{};
                 ubo.projectionView = camera.getProjection() * camera.getView();
-                globalUboBuffer.writeToIndex(&ubo, frameIndex);
-                globalUboBuffer.flushIndex(frameIndex);
+                uboBuffers[frameIndex]->writeToBuffer(&ubo);
+                uboBuffers[frameIndex]->flush();
 
                 FrameInfo frameInfo{
                     frameIndex,
@@ -95,18 +98,8 @@ namespace ODEngine {
         vkDeviceWaitIdle(m_device.device());
     }
 
-    void App::loadGameObjects(){
-        std::shared_ptr<ODModel> odModel = ODModel::createModelFromFile(m_device, m_modelPath);
-        
-        for(int i = 0; i < 10; i++) {
-            for(int k = 0; k < 10; k++) {
-                auto gameObject = ODGameObject::createGameObject();
-                gameObject.model = odModel;
-                gameObject.transform.translation = glm::vec3((float)i, 1.0f, (float)k);
-                gameObject.transform.scale = glm::vec3(2.f, 1.f, 2.f);
-                m_gameObjects.push_back(std::move(gameObject));
-            }
-        }
+    std::shared_ptr<ODModel> App::createModelFromFile(const std::string &modelPath){
+        return ODModel::createModelFromFile(m_device, modelPath);
     }
 
 }
