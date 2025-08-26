@@ -22,7 +22,9 @@ namespace ODEngine {
 
     struct GlobalUbo {
         glm::mat4 projectionView{1.f};
-        glm::vec3 lightDirection = glm::vec3(1.f, -3.f, -1.f);
+        glm::vec4 ambientLightColor{1.f, .9f, .9f, .02f};
+        glm::vec3 lightPosition{-1.f};
+        alignas(16) glm::vec4 lightColor{1.f, 1.f, 1.f, 10.f};
     };
 
     App::App() {
@@ -67,6 +69,7 @@ namespace ODEngine {
         camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
 
         auto viewerObject = ODGameObject::createGameObject();
+        viewerObject.transform.translation = {0.f, -1.f, -2.f};
         KeyboardMovementController cameraController{};
 
         auto currentTime = std::chrono::high_resolution_clock::now();

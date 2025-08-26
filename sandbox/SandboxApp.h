@@ -14,6 +14,8 @@ namespace ODEngine {
         void loadGameObjects() override;
 
     private:
+
+        void create3DObjFromFile(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale,  std::shared_ptr<ODModel> model);
         
     };
 }
