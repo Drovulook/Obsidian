@@ -26,7 +26,10 @@ namespace ODEngine {
     };
 
     App::App() {
-
+        m_globalDescriptorPool = ODDescriptorPool::Builder(m_device)
+            .setMaxSets(ODSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ODSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .build();
     }
 
     App::~App(){
@@ -47,8 +50,19 @@ namespace ODEngine {
             uboBuffers[i]->map();
         }
 
+        auto globalSetLayout = ODDescriptorSetLayout::Builder(m_device)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL)
+            .build();
+        
+        std::vector<VkDescriptorSet> globalDescriptorSets(ODSwapChain::MAX_FRAMES_IN_FLIGHT); // 1 descriptor set per frame
+        for(int i=0; i < globalDescriptorSets.size(); i++) {
+            auto bufferInfo = uboBuffers[i]->descriptorInfo();
+            ODDescriptorWriter(*globalSetLayout, *m_globalDescriptorPool)
+                .writeBuffer(0, &bufferInfo)
+                .build(globalDescriptorSets[i]);
+        }
 
-        SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass());
+        SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         ODCamera camera{};
         camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
 
@@ -85,7 +99,8 @@ namespace ODEngine {
                     frameIndex,
                     deltaTime,
                     commandBuffer,
-                    camera
+                    camera,
+                    globalDescriptorSets[frameIndex]
                 };
 
                 // render

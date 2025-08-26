@@ -52,7 +52,7 @@ namespace ODEngine {
     }
     
     ODDescriptorSetLayout::~ODDescriptorSetLayout() {
-    vkDestroyDescriptorSetLayout(device.device(), descriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(device.device(), descriptorSetLayout, nullptr);
     }
     
 
@@ -61,22 +61,22 @@ namespace ODEngine {
     
     ODDescriptorPool::Builder &ODDescriptorPool::Builder::addPoolSize(
         VkDescriptorType descriptorType, uint32_t count) {
-    poolSizes.push_back({descriptorType, count});
-    return *this;
+        poolSizes.push_back({descriptorType, count});
+        return *this;
     }
     
     ODDescriptorPool::Builder &ODDescriptorPool::Builder::setPoolFlags(
         VkDescriptorPoolCreateFlags flags) {
-    poolFlags = flags;
-    return *this;
+        poolFlags = flags;
+        return *this;
     }
     ODDescriptorPool::Builder &ODDescriptorPool::Builder::setMaxSets(uint32_t count) {
-    maxSets = count;
-    return *this;
+        maxSets = count;
+        return *this;
     }
     
     std::unique_ptr<ODDescriptorPool> ODDescriptorPool::Builder::build() const {
-    return std::make_unique<ODDescriptorPool>(device, maxSets, poolFlags, poolSizes);
+        return std::make_unique<ODDescriptorPool>(device, maxSets, poolFlags, poolSizes);
     }
     
     // *************** Descriptor Pool *********************
@@ -141,44 +141,44 @@ namespace ODEngine {
     
     ODDescriptorWriter &ODDescriptorWriter::writeBuffer(
         uint32_t binding, VkDescriptorBufferInfo *bufferInfo) {
-    assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
-    
-    auto &bindingDescription = setLayout.bindings[binding];
-    
-    assert(
-        bindingDescription.descriptorCount == 1 &&
-        "Binding single descriptor info, but binding expects multiple");
-    
-    VkWriteDescriptorSet write{};
-    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.descriptorType = bindingDescription.descriptorType;
-    write.dstBinding = binding;
-    write.pBufferInfo = bufferInfo;
-    write.descriptorCount = 1;
-    
-    writes.push_back(write);
-    return *this;
+        assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
+        
+        auto &bindingDescription = setLayout.bindings[binding];
+        
+        assert(
+            bindingDescription.descriptorCount == 1 &&
+            "Binding single descriptor info, but binding expects multiple");
+        
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.descriptorType = bindingDescription.descriptorType;
+        write.dstBinding = binding;
+        write.pBufferInfo = bufferInfo;
+        write.descriptorCount = 1;
+        
+        writes.push_back(write);
+        return *this;
     }
     
     ODDescriptorWriter &ODDescriptorWriter::writeImage(
         uint32_t binding, VkDescriptorImageInfo *imageInfo) {
-    assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
-    
-    auto &bindingDescription = setLayout.bindings[binding];
-    
-    assert(
-        bindingDescription.descriptorCount == 1 &&
-        "Binding single descriptor info, but binding expects multiple");
-    
-    VkWriteDescriptorSet write{};
-    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.descriptorType = bindingDescription.descriptorType;
-    write.dstBinding = binding;
-    write.pImageInfo = imageInfo;
-    write.descriptorCount = 1;
-    
-    writes.push_back(write);
-    return *this;
+        assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
+        
+        auto &bindingDescription = setLayout.bindings[binding];
+        
+        assert(
+            bindingDescription.descriptorCount == 1 &&
+            "Binding single descriptor info, but binding expects multiple");
+        
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.descriptorType = bindingDescription.descriptorType;
+        write.dstBinding = binding;
+        write.pImageInfo = imageInfo;
+        write.descriptorCount = 1;
+        
+        writes.push_back(write);
+        return *this;
     }
     
     bool ODDescriptorWriter::build(VkDescriptorSet &set) {

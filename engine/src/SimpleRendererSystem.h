@@ -15,7 +15,7 @@ namespace ODEngine {
     class SimpleRendererSystem {
         public:
 
-            SimpleRendererSystem(ODDevice& device, VkRenderPass renderPass);
+            SimpleRendererSystem(ODDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
             virtual ~SimpleRendererSystem();
 
             SimpleRendererSystem(const SimpleRendererSystem&) = delete;
@@ -24,7 +24,7 @@ namespace ODEngine {
             void renderGameObjects(FrameInfo& frameInfo, std::vector<ODGameObject>& gameObjects);
 
         private:
-            void createPipelineLayout();
+            void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
             void createPipeline(VkRenderPass renderPass);
 
         private:

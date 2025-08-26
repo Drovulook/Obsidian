@@ -11,5 +11,6 @@ namespace ODEngine {
         float frameTime;
         VkCommandBuffer commandBuffer;
         ODCamera& camera;
+        VkDescriptorSet globalDescriptorSet;
     };
 }
