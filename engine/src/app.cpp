@@ -2,7 +2,8 @@
 
 #include "keyboardMovementController.h"
 #include "ODCamera.h"
-#include "SimpleRendererSystem.h"
+#include "RendererSystems/SimpleRendererSystem.h"
+#include "RendererSystems/PointLightSystem.h"
 #include "ODBuffer.h"
 
 // libs
@@ -21,10 +22,11 @@
 namespace ODEngine {
 
     struct GlobalUbo {
-        glm::mat4 projectionView{1.f};
+        glm::mat4 projection{1.f};
+        glm::mat4 view{1.f};
         glm::vec4 ambientLightColor{1.f, .9f, .9f, .02f};
         glm::vec3 lightPosition{-1.f};
-        alignas(16) glm::vec4 lightColor{1.f, 1.f, 1.f, 10.f};
+        alignas(16) glm::vec4 lightColor{1.f, 1.f, 1.f, 5.f};
     };
 
     App::App() {
@@ -53,7 +55,7 @@ namespace ODEngine {
         }
 
         auto globalSetLayout = ODDescriptorSetLayout::Builder(m_device)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
         
         std::vector<VkDescriptorSet> globalDescriptorSets(ODSwapChain::MAX_FRAMES_IN_FLIGHT); // 1 descriptor set per frame
@@ -65,6 +67,8 @@ namespace ODEngine {
         }
 
         SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
+        PointLightSystem pointLightSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
+        
         ODCamera camera{};
         camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
 
@@ -94,7 +98,8 @@ namespace ODEngine {
                 
                 // update
                 GlobalUbo ubo{};
-                ubo.projectionView = camera.getProjection() * camera.getView();
+                ubo.projection = camera.getProjection();
+                ubo.view = camera.getView();
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
@@ -103,12 +108,14 @@ namespace ODEngine {
                     deltaTime,
                     commandBuffer,
                     camera,
-                    globalDescriptorSets[frameIndex]
+                    globalDescriptorSets[frameIndex],
+                    m_gameObjects
                 };
 
                 // render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRendererSystem.renderGameObjects(frameInfo, m_gameObjects);
+                simpleRendererSystem.renderGameObjects(frameInfo);
+                pointLightSystem.render(frameInfo);
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }

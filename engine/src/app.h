@@ -38,7 +38,7 @@ namespace ODEngine {
             std::unique_ptr<ODDescriptorPool> m_globalDescriptorPool{};
 
         protected:
-            std::vector<ODGameObject> m_gameObjects;
+            ODGameObject::Map m_gameObjects;
 
     };
 

@@ -31,8 +31,10 @@ namespace ODEngine {
 
         std::shared_ptr<ODModel> vaseModel = createModelFromFile("sandbox/models/smooth_vase.obj");
         for(int i=0; i<10; i++) {
-            create3DObjFromFile(glm::vec3((float)i, 0.f, 0.f), glm::vec3(.0f, .0f, .0f), glm::vec3(2.f, 2.f, 2.f), vaseModel);
-        };
+            for(int k=0; k<10; k++) {
+            create3DObjFromFile(glm::vec3((float)i, 0.f, (float)k), glm::vec3(.0f, .0f, .0f), glm::vec3(2.f, 2.f, 2.f), vaseModel);
+            }
+        }
     }
 
         void SandboxApp::create3DObjFromFile(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale, std::shared_ptr<ODModel> model){
@@ -41,7 +43,7 @@ namespace ODEngine {
             gameObject.transform.translation = translation;
             gameObject.transform.rotation = rotation;
             gameObject.transform.scale = scale;
-            m_gameObjects.push_back(std::move(gameObject));
+            m_gameObjects.emplace(gameObject.getId(), std::move(gameObject));
         }
     
         App* CreateApp() {

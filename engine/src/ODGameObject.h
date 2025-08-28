@@ -7,6 +7,7 @@
 
 // std
 #include <memory>
+#include <unordered_map>
 
 namespace ODEngine {
 
@@ -24,6 +25,7 @@ namespace ODEngine {
         
         public:
         using id_t = unsigned int; 
+        using Map = std::unordered_map<id_t, ODGameObject>;
 
         static ODGameObject createGameObject(){
             static id_t currentId = 0;

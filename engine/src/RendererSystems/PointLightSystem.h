@@ -12,16 +12,16 @@
 #include <vector>
 
 namespace ODEngine {
-    class SimpleRendererSystem {
+    class PointLightSystem {
         public:
 
-            SimpleRendererSystem(ODDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
-            virtual ~SimpleRendererSystem();
+            PointLightSystem(ODDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+            virtual ~PointLightSystem();
 
-            SimpleRendererSystem(const SimpleRendererSystem&) = delete;
-            SimpleRendererSystem& operator=(const SimpleRendererSystem&) = delete;
+            PointLightSystem(const PointLightSystem&) = delete;
+            PointLightSystem& operator=(const PointLightSystem&) = delete;
             
-            void renderGameObjects(FrameInfo& frameInfo, std::vector<ODGameObject>& gameObjects);
+            void render(FrameInfo& frameInfo);
 
         private:
             void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);

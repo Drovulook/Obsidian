@@ -14,6 +14,8 @@ namespace ODEngine {
         ODPipelineConfigInfo(const ODPipelineConfigInfo&) = delete;
         ODPipelineConfigInfo& operator=(const ODPipelineConfigInfo&) = delete;
 
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
         VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;

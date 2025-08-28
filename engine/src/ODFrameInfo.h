@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ODCamera.h"
+#include "ODGameObject.h"
 
 //lib
 #include <vulkan/vulkan.h>
@@ -12,5 +13,6 @@ namespace ODEngine {
         VkCommandBuffer commandBuffer;
         ODCamera& camera;
         VkDescriptorSet globalDescriptorSet;
+        ODGameObject::Map& gameObjects;
     };
 }
