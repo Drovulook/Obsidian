@@ -21,6 +21,10 @@ namespace ODEngine {
 
     };
 
+    struct PointLightComponent {
+        float lightIntensity = 1.0f;
+    };
+
     class ODGameObject {
         
         public:
@@ -32,6 +36,8 @@ namespace ODEngine {
             return ODGameObject(currentId++);
         };
 
+        static ODGameObject makePointLight(float intensity = 5.0f, float radius =0.1f, glm::vec3 color = glm::vec3(1.f));
+
         ODGameObject(const ODGameObject&) = delete;
         ODGameObject& operator=(const ODGameObject&) = delete; 
         ODGameObject(ODGameObject&&) = default;
@@ -42,6 +48,8 @@ namespace ODEngine {
         std::shared_ptr<ODModel> model {}; 
         glm::vec3 color {}; 
         TransformComponent transform{};
+
+        std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
         private:
             ODGameObject(id_t id) : m_id(id) {}

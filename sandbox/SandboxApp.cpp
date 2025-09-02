@@ -1,4 +1,5 @@
 #include "SandboxApp.h"
+#include <glm/glm.hpp>
 
 #include <iostream>
 
@@ -32,8 +33,28 @@ namespace ODEngine {
         std::shared_ptr<ODModel> vaseModel = createModelFromFile("sandbox/models/smooth_vase.obj");
         for(int i=0; i<10; i++) {
             for(int k=0; k<10; k++) {
-            create3DObjFromFile(glm::vec3((float)i, 0.f, (float)k), glm::vec3(.0f, .0f, .0f), glm::vec3(2.f, 2.f, 2.f), vaseModel);
+            create3DObjFromFile(glm::vec3((float)i - 5.f, 0.f, (float)k - 5.f), glm::vec3(.0f, .0f, .0f), glm::vec3(2.f, 2.f, 2.f), vaseModel);
             }
+        }
+
+        std::vector<glm::vec3> lightColors{
+            {1.f, .1f, .1f},
+            {.1f, .1f, 1.f},
+            {.1f, 1.f, .1f},
+            {1.f, 1.f, .1f},
+            {.1f, 1.f, 1.f},
+            {1.f, 1.f, 1.f}  //
+        };
+
+        for(int i=0; i<lightColors.size(); i++) {
+            auto pointLight = ODGameObject::makePointLight(.5f);
+            pointLight.color = lightColors[i];
+            
+            auto rotateRight = glm::rotate(glm::mat4(1.f), (float)i * glm::two_pi<float>() / (float)lightColors.size(), glm::vec3(0.f, -1.f, 0.f));
+            pointLight.transform.translation = glm::vec3(rotateRight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+
+
+            m_gameObjects.emplace(pointLight.getId(), std::move(pointLight));
         }
     }
 

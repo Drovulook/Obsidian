@@ -21,14 +21,6 @@
 
 namespace ODEngine {
 
-    struct GlobalUbo {
-        glm::mat4 projection{1.f};
-        glm::mat4 view{1.f};
-        glm::vec4 ambientLightColor{1.f, .9f, .9f, .02f};
-        glm::vec3 lightPosition{-1.f};
-        alignas(16) glm::vec4 lightColor{1.f, 1.f, 1.f, 5.f};
-    };
-
     App::App() {
         m_globalDescriptorPool = ODDescriptorPool::Builder(m_device)
             .setMaxSets(ODSwapChain::MAX_FRAMES_IN_FLIGHT)
@@ -96,13 +88,6 @@ namespace ODEngine {
             if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
                 int frameIndex = m_renderer.getCurrentFrameIndex();
                 
-                // update
-                GlobalUbo ubo{};
-                ubo.projection = camera.getProjection();
-                ubo.view = camera.getView();
-                uboBuffers[frameIndex]->writeToBuffer(&ubo);
-                uboBuffers[frameIndex]->flush();
-
                 FrameInfo frameInfo{
                     frameIndex,
                     deltaTime,
@@ -111,6 +96,15 @@ namespace ODEngine {
                     globalDescriptorSets[frameIndex],
                     m_gameObjects
                 };
+
+                // update
+                GlobalUbo ubo{};
+                ubo.projection = camera.getProjection();
+                ubo.view = camera.getView();
+                pointLightSystem.update(frameInfo, ubo);
+                uboBuffers[frameIndex]->writeToBuffer(&ubo);
+                uboBuffers[frameIndex]->flush();
+
 
                 // render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
