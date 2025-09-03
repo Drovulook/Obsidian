@@ -27,13 +27,10 @@ namespace ODEngine {
     }
 
     SimpleRendererSystem::~SimpleRendererSystem(){
-
         vkDestroyPipelineLayout(m_device.device(), m_pipelineLayout, nullptr);
     }
 
-    void SimpleRendererSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
-    {
-
+    void SimpleRendererSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout){
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;

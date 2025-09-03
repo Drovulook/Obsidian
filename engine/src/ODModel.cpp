@@ -107,7 +107,6 @@ namespace ODEngine {
     std::unique_ptr<ODModel> ODModel::createModelFromFile(ODDevice &device, const std::string &filepath){
         Builder builder {};
         builder.loadModels(filepath);
-        std::cout << "Vertex Count: " << builder.vertices.size() << std::endl;
         return std::make_unique<ODModel>(device, builder);
     }
 

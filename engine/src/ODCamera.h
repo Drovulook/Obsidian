@@ -17,9 +17,11 @@ namespace ODEngine {
 
         const glm::mat4& getProjection() const { return m_projectionMatrix; }
         const glm::mat4& getView() const { return m_viewMatrix; }
+        const glm::mat4& getInverseView() const { return m_inverseViewMatrix; }
 
     private:
         glm::mat4 m_projectionMatrix{1.0f};
         glm::mat4 m_viewMatrix{1.0f};
+        glm::mat4 m_inverseViewMatrix{1.0f};
     };
 }
