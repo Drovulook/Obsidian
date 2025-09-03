@@ -12,6 +12,7 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <map>
 
 namespace ODEngine {
 
@@ -60,6 +61,7 @@ namespace ODEngine {
 
         ODPipelineConfigInfo pipelineConfig{};
         ODPipeline::defaultPipelineConfigInfo(pipelineConfig);
+        ODPipeline::enableAlphaBlending(pipelineConfig);
         pipelineConfig.attributeDescriptions.clear();
         pipelineConfig.bindingDescriptions.clear();
         pipelineConfig.renderPass = renderPass;
@@ -94,6 +96,17 @@ namespace ODEngine {
 
     void PointLightSystem::render(FrameInfo &frameInfo){
 
+        //sort lights for alpha blending
+        std::map<float, ODGameObject::id_t> sorted;
+        for(auto& kv: frameInfo.gameObjects) {
+            auto& obj = kv.second;
+            if(obj.pointLight == nullptr) continue;
+
+            auto offset = frameInfo.camera.getPosition() - obj.transform.translation;
+            float distanceSquared = glm::dot(offset, offset);
+            sorted[distanceSquared] = obj.getId();
+        }
+
         m_pipeline->bind(frameInfo.commandBuffer);
         
         vkCmdBindDescriptorSets(
@@ -107,9 +120,9 @@ namespace ODEngine {
             nullptr
         );
 
-        for(auto& kv: frameInfo.gameObjects) {
-            auto& obj = kv.second;
-            if(obj.pointLight == nullptr) continue;
+        // iterate through sorted in reverse order
+        for(auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+            auto& obj = frameInfo.gameObjects.at(it->second);
 
             PointLightPushConstants push{};
             push.position = glm::vec4(obj.transform.translation, 1.0f);

@@ -106,11 +106,14 @@ namespace ODEngine {
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
-
+                
                 // render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
+                
+                // order matters for alpha blending
                 simpleRendererSystem.renderGameObjects(frameInfo);
                 pointLightSystem.render(frameInfo);
+            
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }

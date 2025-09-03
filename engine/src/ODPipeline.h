@@ -49,6 +49,7 @@ namespace ODEngine {
             void bind(VkCommandBuffer commandBuffer);
 
             static void defaultPipelineConfigInfo(ODPipelineConfigInfo& configInfo);
+            static void enableAlphaBlending(ODPipelineConfigInfo& configInfo);
 
         private:
             static std::vector<char> readFile(const std::string& filename);
