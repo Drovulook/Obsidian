@@ -1,9 +1,9 @@
 #include "app.h"
 
 #include "keyboardMovementController.h"
-#include "ODCamera.h"
 #include "RendererSystems/SimpleRendererSystem.h"
 #include "RendererSystems/PointLightSystem.h"
+#include "RendererSystems/GridSystem.h"
 #include "ODBuffer.h"
 
 // libs
@@ -60,13 +60,17 @@ namespace ODEngine {
 
         SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         PointLightSystem pointLightSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
-        
-        ODCamera camera{};
-        camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
+        GridSystem gridSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
 
-        auto viewerObject = ODGameObject::createGameObject();
-        viewerObject.transform.translation = {0.f, -1.f, -2.f};
+        auto m_cameraObject = ODGameObject::makeCameraObject();
+        m_cameraObject.camera->setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
+
+        m_cameraObject.transform.translation = {0.f, -1.f, -2.f};
         KeyboardMovementController cameraController{};
+        cameraController.init_callbacks(m_window.getGLFWWindow());
+
+        float aspect = m_renderer.getAspectRatio();
+        m_cameraObject.camera->setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -79,12 +83,10 @@ namespace ODEngine {
 
             deltaTime = glm::min(deltaTime, 1.0f / 30.0f);
 
-            cameraController.MoveInPlaneXZ(m_window.getGLFWWindow(), deltaTime, viewerObject);
-            camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+            cameraController.HandleInputs(m_window.getGLFWWindow(), deltaTime, m_cameraObject);
+            m_cameraObject.camera->setViewYXZ(m_cameraObject.transform.translation, m_cameraObject.transform.rotation);
+            m_cameraObject.camera->updatePerspectiveProjection();
 
-            float aspect = m_renderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
-            
             if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
                 int frameIndex = m_renderer.getCurrentFrameIndex();
                 
@@ -92,16 +94,16 @@ namespace ODEngine {
                     frameIndex,
                     deltaTime,
                     commandBuffer,
-                    camera,
+                    *m_cameraObject.camera,
                     globalDescriptorSets[frameIndex],
                     m_gameObjects
                 };
 
                 // update
                 GlobalUbo ubo{};
-                ubo.projection = camera.getProjection();
-                ubo.view = camera.getView();
-                ubo.inverseView = camera.getInverseView();
+                ubo.projection = m_cameraObject.camera->getProjection();
+                ubo.view = m_cameraObject.camera->getView();
+                ubo.inverseView = m_cameraObject.camera->getInverseView();
                 pointLightSystem.update(frameInfo, ubo);
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
@@ -112,6 +114,7 @@ namespace ODEngine {
                 
                 // order matters for alpha blending
                 simpleRendererSystem.renderGameObjects(frameInfo);
+                gridSystem.render(frameInfo);
                 pointLightSystem.render(frameInfo);
             
                 m_renderer.endSwapChainRenderPass(commandBuffer);

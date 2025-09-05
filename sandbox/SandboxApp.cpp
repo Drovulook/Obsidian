@@ -19,8 +19,8 @@ namespace ODEngine {
     }
 
     void SandboxApp::loadGameObjects(){
-        std::shared_ptr<ODModel> floorModel = createModelFromFile("sandbox/models/floor.obj");
-        create3DObjFromFile(glm::vec3(0.0f, .0f, 0.f), glm::vec3(.0f, .0f, .0f), glm::vec3(20.f, 1.f, 20.f), floorModel);
+        // std::shared_ptr<ODModel> floorModel = createModelFromFile("sandbox/models/floor.obj");
+        // create3DObjFromFile(glm::vec3(0.0f, .0f, 0.f), glm::vec3(.0f, .0f, .0f), glm::vec3(20.f, 1.f, 20.f), floorModel);
 
         std::shared_ptr<ODModel> vaseModel = createModelFromFile("sandbox/models/smooth_vase.obj");
         for(int i=0; i<10; i++) {

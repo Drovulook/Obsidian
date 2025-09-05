@@ -69,8 +69,8 @@ namespace ODEngine {
 
         m_pipeline = std::make_unique<ODPipeline>(
             m_device, 
-            ENGINE_PATH "/shaders/point_light_shader.vert.spv", 
-            ENGINE_PATH "/shaders/point_light_shader.frag.spv",
+            ENGINE_PATH "/shaders/compiled/point_light_shader.vert.spv", 
+            ENGINE_PATH "/shaders/compiled/point_light_shader.frag.spv",
             pipelineConfig);
     }
 

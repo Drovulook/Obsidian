@@ -1,4 +1,4 @@
-#include "SimpleRendererSystem.h"
+#include "GridSystem.h"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -14,27 +14,33 @@
 #include <iostream>
 
 namespace ODEngine {
-    struct SimplePushConstantData {
-        glm::mat4 modelMatrix{1.0f};
-        glm::mat4 normalMatrix{1.0f};
-        // alignas(16)glm::vec3 color;
-    };
-
-    SimpleRendererSystem::SimpleRendererSystem(ODDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) 
+    GridSystem::GridSystem(ODDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) 
     : m_device(device) {
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
+
+        float factor = 10.0f;
+        auto gridBuilder = ODModel::Builder{};
+        gridBuilder.vertices = {
+            {{-factor, 0.0f, -factor}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+            {{factor, 0.0f, -factor}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+            {{factor, 0.0f, factor}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
+            {{-factor, 0.0f, factor}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
+        };
+        gridBuilder.indices = {0, 1, 2, 2, 3, 0};
+
+        m_grid = std::make_unique<ODModel>(m_device, gridBuilder);
     }
 
-    SimpleRendererSystem::~SimpleRendererSystem(){
+    GridSystem::~GridSystem(){
         vkDestroyPipelineLayout(m_device.device(), m_pipelineLayout, nullptr);
     }
 
-    void SimpleRendererSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout){
-        VkPushConstantRange pushConstantRange{};
-        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-        pushConstantRange.offset = 0;
-        pushConstantRange.size = sizeof(SimplePushConstantData);
+    void GridSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout){
+        // VkPushConstantRange pushConstantRange{};
+        // pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        // pushConstantRange.offset = 0;
+        // pushConstantRange.size = sizeof(SimplePushConstantData);
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
 
@@ -42,14 +48,14 @@ namespace ODEngine {
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()); 
         pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-        pipelineLayoutInfo.pushConstantRangeCount = 1;
-        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+        pipelineLayoutInfo.pushConstantRangeCount = 0;
+        pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
         if (vkCreatePipelineLayout(m_device.device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
-    void SimpleRendererSystem::createPipeline(VkRenderPass renderPass) {
+    void GridSystem::createPipeline(VkRenderPass renderPass) {
         assert(m_pipelineLayout != nullptr && "Pipeline layout must be created before creating the pipeline");
 
         m_pipeline.reset();
@@ -61,12 +67,12 @@ namespace ODEngine {
 
         m_pipeline = std::make_unique<ODPipeline>(
             m_device, 
-            ENGINE_PATH "/shaders/compiled/simple_shader.vert.spv", 
-            ENGINE_PATH "/shaders/compiled/simple_shader.frag.spv",
+            ENGINE_PATH "/shaders/compiled/grid_shader.vert.spv", 
+            ENGINE_PATH "/shaders/compiled/grid_shader.frag.spv",
             pipelineConfig);
     }
 
-    void SimpleRendererSystem::renderGameObjects(FrameInfo& frameInfo){
+    void GridSystem::render(FrameInfo& frameInfo){
 
         m_pipeline->bind(frameInfo.commandBuffer);
         
@@ -80,26 +86,8 @@ namespace ODEngine {
             0,
             nullptr
         );
-
-        for (auto& kv : frameInfo.gameObjects) {
-            auto& obj = kv.second;
-            if(obj.model == nullptr) continue;
-
-            SimplePushConstantData push{};
-            push.modelMatrix = obj.transform.mat4();
-            push.normalMatrix = obj.transform.normalMatrix();
-
-            vkCmdPushConstants(
-                frameInfo.commandBuffer,
-                m_pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0, // offset
-                sizeof(SimplePushConstantData),
-                &push
-            );
-            obj.model->bind(frameInfo.commandBuffer);
-            obj.model->draw(frameInfo.commandBuffer);
-        }
+        m_grid->bind(frameInfo.commandBuffer);
+        m_grid->draw(frameInfo.commandBuffer);
     }
 
 }

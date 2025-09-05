@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ODModel.h"
+#include "ODCamera.h"
 
 // libs
 #include <glm/gtc/matrix_transform.hpp>
@@ -37,6 +38,7 @@ namespace ODEngine {
         };
 
         static ODGameObject makePointLight(float intensity = 5.0f, float radius =0.1f, glm::vec3 color = glm::vec3(1.f));
+        static ODGameObject makeCameraObject();
 
         ODGameObject(const ODGameObject&) = delete;
         ODGameObject& operator=(const ODGameObject&) = delete; 
@@ -50,6 +52,7 @@ namespace ODEngine {
         TransformComponent transform{};
 
         std::unique_ptr<PointLightComponent> pointLight = nullptr;
+        std::unique_ptr<ODCamera> camera = nullptr;
 
         private:
             ODGameObject(id_t id) : m_id(id) {}

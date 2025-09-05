@@ -37,6 +37,8 @@ namespace ODEngine {
             ODRenderer m_renderer{m_window, m_device};
             std::unique_ptr<ODDescriptorPool> m_globalDescriptorPool{};
 
+            std::shared_ptr<ODGameObject> m_cameraObject = nullptr;
+
         protected:
             ODGameObject::Map m_gameObjects;
 

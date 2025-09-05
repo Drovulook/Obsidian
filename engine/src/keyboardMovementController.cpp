@@ -2,6 +2,23 @@
 #include <limits>
 
 namespace ODEngine{
+    void KeyboardMovementController::init_callbacks(GLFWwindow *window){
+        glfwSetWindowUserPointer(window, this);
+        glfwSetScrollCallback(window, scroll_callback);
+    }
+
+    void KeyboardMovementController::scroll_callback(GLFWwindow *window, double xoffset, double yoffset){
+        auto* controller = static_cast<KeyboardMovementController*>(glfwGetWindowUserPointer(window));
+        if (controller) {
+            controller->m_lastScrollY = static_cast<float>(yoffset);
+        }
+    }
+
+    void KeyboardMovementController::HandleInputs(GLFWwindow *window, float dt, ODGameObject &gameObject){
+        MoveInPlaneXZ(window, dt, gameObject);
+        HandleScrolling(dt, gameObject);
+    }
+
     void KeyboardMovementController::MoveInPlaneXZ(GLFWwindow *window, float dt, ODGameObject &gameObject){
 
         glm::vec3 rotate{0};
@@ -31,6 +48,20 @@ namespace ODEngine{
         if (glfwGetKey(window, keys.moveDown) == GLFW_PRESS) moveDir -= upDir;
         if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
             gameObject.transform.translation += m_moveSpeed * dt * glm::normalize(moveDir);
+        }
+    }
+    void KeyboardMovementController::HandleScrolling(float dt, ODGameObject &gameObject){
+        if(abs(m_lastScrollY) > std::numeric_limits<float>::epsilon()) {
+            assert(gameObject.camera != nullptr && "Object is not a camera");
+            float new_fov_value = gameObject.camera->m_perspData.fovy -= m_lastScrollY * dt * m_scrollSpeed;
+            new_fov_value = glm::clamp(new_fov_value, glm::radians(25.0f), glm::radians(90.0f));
+            gameObject.camera->setPerspectiveProjection(
+                new_fov_value,
+                gameObject.camera->m_perspData.aspect,
+                gameObject.camera->m_perspData.near,
+                gameObject.camera->m_perspData.far
+            );
+            m_lastScrollY = 0.0f;
         }
     }
 }

@@ -7,6 +7,21 @@
 
 namespace ODEngine {
     class ODCamera {
+        struct OrthographicData {
+            float left;
+            float right;
+            float bottom;
+            float top;
+            float near;
+            float far;
+        };
+        struct PerspectiveData {
+            float fovy;
+            float aspect;
+            float near;
+            float far;
+        };
+
     public:
         void setOrthographicProjection(float left, float right, float bottom, float top, float near, float far);
         void setPerspectiveProjection(float fovy, float aspect, float near, float far);
@@ -19,10 +34,19 @@ namespace ODEngine {
         const glm::mat4& getView() const { return m_viewMatrix; }
         const glm::mat4& getInverseView() const { return m_inverseViewMatrix; }
         const glm::vec3& getPosition() const { return glm::vec3(m_inverseViewMatrix[3]); }
+        
+        void updateOrthographicProjection();
+        void updatePerspectiveProjection();
+
+    public:
+        OrthographicData m_orthoData{};
+        PerspectiveData m_perspData{};
 
     private:
         glm::mat4 m_projectionMatrix{1.0f};
         glm::mat4 m_viewMatrix{1.0f};
         glm::mat4 m_inverseViewMatrix{1.0f};
+
+        bool m_is_perspective = true;
     };
 }

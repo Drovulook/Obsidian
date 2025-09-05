@@ -18,11 +18,22 @@ namespace ODEngine {
                 int lookUp = GLFW_KEY_UP;
                 int lookDown = GLFW_KEY_DOWN;
             };
-
+        
+        void init_callbacks(GLFWwindow* window);
+        static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+        
+        void HandleInputs(GLFWwindow* window, float dt, ODGameObject& gameObject);
+        
+        private:
         void MoveInPlaneXZ(GLFWwindow* window, float dt, ODGameObject& gameObject);
+        void HandleScrolling(float dt, ODGameObject& gameObject);
+        
+        private:
+            KeyMappings keys{};
+            float m_moveSpeed = 2.5f;
+            float m_lookSpeed = 1.5f;
+            float m_scrollSpeed = 50.0f;
 
-        KeyMappings keys{};
-        float m_moveSpeed = 2.5f;
-        float m_lookSpeed = 1.5f;
+            float m_lastScrollY = 0.0f;
     };
 }
