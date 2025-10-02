@@ -93,6 +93,7 @@ target_include_directories(ObsidianEngine PUBLIC
     engine/libraries/glfw-3.4/include
     engine/libraries/glm-1.0.1
     engine/libraries/tinyobjloader
+    engine/libraries/stbimage
     engine/src                # Engine source directory
 )
 

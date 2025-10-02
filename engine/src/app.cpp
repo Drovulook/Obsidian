@@ -60,7 +60,7 @@ namespace ODEngine {
 
         SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         PointLightSystem pointLightSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
-        GridSystem gridSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
+        // GridSystem gridSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
 
         auto m_cameraObject = ODGameObject::makeCameraObject();
         m_cameraObject.camera->setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
@@ -108,13 +108,12 @@ namespace ODEngine {
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
-                
                 // render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
                 
                 // order matters for alpha blending
                 simpleRendererSystem.renderGameObjects(frameInfo);
-                gridSystem.render(frameInfo);
+                // gridSystem.render(frameInfo);
                 pointLightSystem.render(frameInfo);
             
                 m_renderer.endSwapChainRenderPass(commandBuffer);
@@ -127,5 +126,4 @@ namespace ODEngine {
     std::shared_ptr<ODModel> App::createModelFromFile(const std::string &modelPath){
         return ODModel::createModelFromFile(m_device, modelPath);
     }
-
 }

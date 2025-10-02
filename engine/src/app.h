@@ -25,6 +25,8 @@ namespace ODEngine {
 
             virtual void run();
 
+            ODDevice& getDevice() { return m_device; }
+
         protected:
             std::shared_ptr<ODModel> createModelFromFile(const std::string& modelPath);
 
