@@ -23,7 +23,7 @@ namespace ODEngine {
         // create3DObjFromFile(glm::vec3(0.0f, .0f, 0.f), glm::vec3(.0f, .0f, .0f), glm::vec3(20.f, 1.f, 20.f), floorModel);
 
         std::shared_ptr<ODModel> roomModel = createModelFromFile("sandbox/models/room.obj");
-        roomModel->createTextureImage(getDevice(), "sandbox/textures/viking_room.png");
+        roomModel->createTextureImage("sandbox/textures/viking_room.png");
         create3DObjFromFile(glm::vec3(0.f, 0.f, 0.f), glm::vec3(glm::half_pi<float>(), glm::half_pi<float>(), .0f), glm::vec3(1.f, 1.f, 1.f), roomModel);
 
         std::shared_ptr<ODModel> vaseModel = createModelFromFile("sandbox/models/smooth_vase.obj");

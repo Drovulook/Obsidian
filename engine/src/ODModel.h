@@ -44,7 +44,7 @@ namespace ODEngine {
         ODModel& operator=(const ODModel&) = delete;
 
         static std::unique_ptr<ODModel> createModelFromFile(ODDevice& device, const std::string& filepath);
-        void createTextureImage(ODDevice& device, const std::string& filepath);
+        void createTextureImage(const std::string& filepath);
 
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
@@ -53,8 +53,10 @@ namespace ODEngine {
         void createVertexBuffer(const std::vector<Vertex>& vertices);
         void createIndexBuffer(const std::vector<uint32_t>& indices);
 
-        void createImage(ODDevice& device, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+        void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
             VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+        void createTextureImageView();
+        void createTextureSampler();
 
         private:
             ODDevice& m_device;
@@ -68,6 +70,8 @@ namespace ODEngine {
 
             VkImage m_textureImage = VK_NULL_HANDLE;
             VkDeviceMemory m_textureImageMemory = VK_NULL_HANDLE;
+            VkImageView m_textureImageView = VK_NULL_HANDLE;
+            VkSampler m_textureSampler = VK_NULL_HANDLE;
 
     };
 }

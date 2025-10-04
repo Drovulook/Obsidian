@@ -206,24 +206,30 @@ void ODSwapChain::createSwapChain() {
   swapChainExtent = extent;
 }
 
-void ODSwapChain::createImageViews() {
-  swapChainImageViews.resize(swapChainImages.size());
-  for (size_t i = 0; i < swapChainImages.size(); i++) {
-    VkImageViewCreateInfo viewInfo{};
+VkImageView ODSwapChain::createImageView(ODDevice &app_device, VkImage image, VkFormat format){
+  VkImageViewCreateInfo viewInfo{};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = swapChainImages[i];
+    viewInfo.image = image;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = swapChainImageFormat;
+    viewInfo.format = format;
     viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.levelCount = 1;
     viewInfo.subresourceRange.baseArrayLayer = 0;
     viewInfo.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(device.device(), &viewInfo, nullptr, &swapChainImageViews[i]) !=
-        VK_SUCCESS) {
-      throw std::runtime_error("failed to create texture image view!");
+    VkImageView imageView;
+    if (vkCreateImageView(app_device.device(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create image view!");
     }
+
+    return imageView;
+}
+
+void ODSwapChain::createImageViews() {
+  swapChainImageViews.resize(swapChainImages.size());
+  for (size_t i = 0; i < swapChainImages.size(); i++) {
+    swapChainImageViews[i] = createImageView(device, swapChainImages[i], swapChainImageFormat);
   }
 }
 
@@ -394,15 +400,18 @@ void ODSwapChain::createSyncObjects() {
 }
 
 VkSurfaceFormatKHR ODSwapChain::chooseSwapSurfaceFormat(
-  const std::vector<VkSurfaceFormatKHR> &availableFormats) {
-  for (const auto &availableFormat : availableFormats) {
-    if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && // ou VK_FORMAT_B8G8R8A8_UNORM pour pas de correction GAMMA
-        availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-      return availableFormat;
+    const std::vector<VkSurfaceFormatKHR> &availableFormats)
+{
+    for (const auto &availableFormat : availableFormats)
+    {
+        if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && // ou VK_FORMAT_B8G8R8A8_UNORM pour pas de correction GAMMA
+            availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+        {
+            return availableFormat;
+        }
     }
-  }
 
-  return availableFormats[0];
+    return availableFormats[0];
 }
 
 VkPresentModeKHR ODSwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
