@@ -16,47 +16,50 @@ namespace ODEngine {
     class ODModel {
         public:
 
-        struct Vertex {
-            glm::vec3 position{};
-            glm::vec3 color{};
-            glm::vec3 normal{};
-            glm::vec2 uv{};
+            struct Vertex {
+                glm::vec3 position{};
+                glm::vec3 color{};
+                glm::vec3 normal{};
+                glm::vec2 uv{};
 
-            static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
-            static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+                static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
+                static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
 
-            bool operator== (const Vertex& other) const {
-                return position == other.position && color == other.color && normal == other.normal && uv == other.uv;
-            }
-        };
-        
-        struct Builder {
-            std::vector<Vertex> vertices{};
-            std::vector<uint32_t> indices{};
+                bool operator== (const Vertex& other) const {
+                    return position == other.position && color == other.color && normal == other.normal && uv == other.uv;
+                }
+            };
+            
+            struct Builder {
+                std::vector<Vertex> vertices{};
+                std::vector<uint32_t> indices{};
 
-            void loadModels(const std::string& filepath);
-        };
+                void loadModels(const std::string& filepath);
+            };
 
-        ODModel(ODDevice& device, const ODModel::Builder& builder);
-        ~ODModel();
-        
-        ODModel(const ODModel&) = delete;
-        ODModel& operator=(const ODModel&) = delete;
+            ODModel(ODDevice& device, const ODModel::Builder& builder);
+            ~ODModel();
+            
+            ODModel(const ODModel&) = delete;
+            ODModel& operator=(const ODModel&) = delete;
 
-        static std::unique_ptr<ODModel> createModelFromFile(ODDevice& device, const std::string& filepath);
-        void createTextureImage(const std::string& filepath);
+            static std::unique_ptr<ODModel> createModelFromFile(ODDevice& device, const std::string& filepath);
+            void createTextureImage(const std::string& filepath);
 
-        void bind(VkCommandBuffer commandBuffer);
-        void draw(VkCommandBuffer commandBuffer);
+            void bind(VkCommandBuffer commandBuffer);
+            void draw(VkCommandBuffer commandBuffer);
+
+            VkImageView getTextureImageView() const { return m_textureImageView; }
+            VkSampler getTextureSampler() const { return m_textureSampler; }
 
         private:
-        void createVertexBuffer(const std::vector<Vertex>& vertices);
-        void createIndexBuffer(const std::vector<uint32_t>& indices);
+            void createVertexBuffer(const std::vector<Vertex>& vertices);
+            void createIndexBuffer(const std::vector<uint32_t>& indices);
 
-        void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
-            VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-        void createTextureImageView();
-        void createTextureSampler();
+            void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+                VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+            void createTextureImageView();
+            void createTextureSampler();
 
         private:
             ODDevice& m_device;
@@ -72,6 +75,6 @@ namespace ODEngine {
             VkDeviceMemory m_textureImageMemory = VK_NULL_HANDLE;
             VkImageView m_textureImageView = VK_NULL_HANDLE;
             VkSampler m_textureSampler = VK_NULL_HANDLE;
-
+        
     };
 }
