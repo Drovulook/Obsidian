@@ -6,6 +6,7 @@
 #include "ODWindow.h"
 #include "ODRenderer.h"
 #include "ODDescriptors.h"
+#include "ODTextureHandler.h"
 
 // std
 #include <memory>
@@ -43,6 +44,7 @@ namespace ODEngine {
 
         protected:
             ODGameObject::Map m_gameObjects;
+            std::shared_ptr<ODTextureHandler> m_textureHandler = nullptr;
 
     };
 

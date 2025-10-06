@@ -27,6 +27,8 @@ namespace ODEngine {
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ODSwapChain::MAX_FRAMES_IN_FLIGHT)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ODSwapChain::MAX_FRAMES_IN_FLIGHT)
             .build();
+    
+        m_textureHandler = std::make_shared<ODTextureHandler>(m_device);
     }
 
     App::~App(){
@@ -51,23 +53,11 @@ namespace ODEngine {
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
-        
-        // temporaire: accéder au GameObject de la texture
-        ODGameObject* objPtr = nullptr;
-        auto it = m_gameObjects.find(static_cast<ODGameObject::id_t>(0));
-        if (it != m_gameObjects.end()) {
-            objPtr = &it->second; // référence vers l'objet existant
-        } else {
-            printf("Erreur: pas de GameObject avec id 0\n");
-        }
 
         std::vector<VkDescriptorSet> globalDescriptorSets(ODSwapChain::MAX_FRAMES_IN_FLIGHT); // 1 descriptor set per frame
         for(int i=0; i < globalDescriptorSets.size(); i++) {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
-            VkDescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = objPtr->model->getTextureImageView();
-            imageInfo.sampler = objPtr->model->getTextureSampler();
+            auto imageInfo = m_textureHandler->descriptorInfo();
 
             ODDescriptorWriter(*globalSetLayout, *m_globalDescriptorPool)
                 .writeBuffer(0, &bufferInfo)
@@ -102,7 +92,8 @@ namespace ODEngine {
 
             cameraController.HandleInputs(m_window.getGLFWWindow(), deltaTime, m_cameraObject);
             m_cameraObject.camera->setViewYXZ(m_cameraObject.transform.translation, m_cameraObject.transform.rotation);
-            m_cameraObject.camera->updatePerspectiveProjection();
+            float aspect = m_renderer.getAspectRatio();
+            m_cameraObject.camera->updatePerspectiveProjection(aspect);
 
             if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
                 int frameIndex = m_renderer.getCurrentFrameIndex();

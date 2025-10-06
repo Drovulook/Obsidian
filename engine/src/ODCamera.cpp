@@ -20,7 +20,7 @@ namespace ODEngine {
         assert(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
         if(m_is_perspective) {
             m_perspData = {fovy, aspect, near, far};
-            updatePerspectiveProjection();
+            updatePerspectiveProjection(aspect);
         } else {
             printf("Warning: trying to set a perspective projection on an orthographic camera.\n");
         }
@@ -114,10 +114,10 @@ namespace ODEngine {
         m_projectionMatrix[3][2] = -m_orthoData.near / (m_orthoData.far - m_orthoData.near);
     }
 
-    void ODEngine::ODCamera::updatePerspectiveProjection(){
+    void ODEngine::ODCamera::updatePerspectiveProjection(float aspect){
         const float tanHalfFovy = tan(m_perspData.fovy / 2.f);
         m_projectionMatrix = glm::mat4{0.0f};
-        m_projectionMatrix[0][0] = 1.f / (m_perspData.aspect * tanHalfFovy);
+        m_projectionMatrix[0][0] = 1.f / (aspect * tanHalfFovy);
         m_projectionMatrix[1][1] = 1.f / (tanHalfFovy);
         m_projectionMatrix[2][2] = m_perspData.far / (m_perspData.far - m_perspData.near);
         m_projectionMatrix[2][3] = 1.f;

@@ -16,7 +16,7 @@ namespace ODEngine {
             ODWindow& operator=(const ODWindow&) = delete;
 
             bool shouldClose() const { return glfwWindowShouldClose(m_windowPtr); }
-            VkExtent2D getExtent() { return {static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)}; }
+            VkExtent2D getExtent();
             bool wasWindowResized() { return m_frameBufferResized; }
             void resetWindowResizedFlag() { m_frameBufferResized = false; }
             GLFWwindow* getGLFWWindow() const { return m_windowPtr; }

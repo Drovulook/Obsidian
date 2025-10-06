@@ -36,7 +36,7 @@ namespace ODEngine {
         const glm::vec3& getPosition() const { return glm::vec3(m_inverseViewMatrix[3]); }
         
         void updateOrthographicProjection();
-        void updatePerspectiveProjection();
+        void updatePerspectiveProjection(float aspect);
 
     public:
         OrthographicData m_orthoData{};

@@ -47,7 +47,7 @@ class ODSwapChain {
            swapChain.swapChainImageFormat == swapChainImageFormat;
   }
 
-  static VkImageView createImageView(ODDevice &app_device, VkImage image, VkFormat format);
+  static VkImageView createImageView(ODDevice &app_device, VkImage image, VkFormat format, uint32_t mipLevels = 1);
 
  private:
  void init();

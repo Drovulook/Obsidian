@@ -45,7 +45,7 @@ namespace ODEngine {
     ODRenderer::ODRenderer(ODWindow& window, ODDevice& device)
         : m_window(window), m_device(device) {
         recreateSwapChain();
-        createCommandBuffers(); // Déjà ODRendererelé dans recreateSwapChain()
+        createCommandBuffers(); // Déjà alloué dans recreateSwapChain()
     }
 
     ODRenderer::~ODRenderer(){
@@ -56,7 +56,7 @@ namespace ODEngine {
         auto extent = m_window.getExtent();
         while(extent.width == 0 || extent.height == 0) { // si une dimension est nulle, attendre que la fenêtre soit redimensionnée
             extent = m_window.getExtent();
-            glfwWaitEvents();
+            glfwPollEvents();
         }
 
         vkDeviceWaitIdle(m_device.device());
