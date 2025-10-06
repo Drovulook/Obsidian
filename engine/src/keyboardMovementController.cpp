@@ -49,6 +49,7 @@ namespace ODEngine{
         if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
             gameObject.transform.translation += m_moveSpeed * dt * glm::normalize(moveDir);
         }
+
     }
     void KeyboardMovementController::HandleScrolling(float dt, ODGameObject &gameObject){
         if(abs(m_lastScrollY) > std::numeric_limits<float>::epsilon()) {

@@ -6,10 +6,16 @@ Note: This project is in an early stage and should evolve significantly in the c
 - [Official Vulkan Tutorial](https://vulkan-tutorial.com/)
 - [Vulkan C++ playlist by Brendan Galea](https://www.youtube.com/watch?v=Y9U9IE0gVHA&list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
 
+# Preview
+
+Here is a preview as of now of a scene - including a 3D model with a texture and lighting:
+
+![screenshot](screenshot.png)
+
 # Key Features and main components
 
 At this stage, Obsidian includes some of the foundational components typical of game engines:
-- **Vulkan-based rendering pipeline** with support for textures, mipmaps, swap chains, Abstracts Vulkan device initialization, physical/logical device selection, and queue family management
+- **Vulkan-based rendering pipeline** with support for textures, mipmaps, swap chains, Abstracts Vulkan zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzdevice initialization, physical/logical device selection, and queue family management
 - **3D renderer**, including a window, 3D model loading, camera systems (orthographic/perspective projections), shaders, and basic rendering utilities.
 
 # Future Plans
