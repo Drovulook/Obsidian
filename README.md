@@ -15,7 +15,7 @@ Here is a preview as of now of a scene - including a 3D model with a texture and
 # Key Features and main components
 
 At this stage, Obsidian includes some of the foundational components typical of game engines:
-- **Vulkan-based rendering pipeline** with support for textures, mipmaps, swap chains, Abstracts Vulkan zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzdevice initialization, physical/logical device selection, and queue family management
+- **Vulkan-based rendering pipeline** with support for textures, mipmaps, swap chains, Abstracts Vulkan device initialization, physical/logical device selection, and queue family management
 - **3D renderer**, including a window, 3D model loading, camera systems (orthographic/perspective projections), shaders, and basic rendering utilities.
 
 # Future Plans
