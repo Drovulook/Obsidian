@@ -4,3 +4,4 @@
 - résoudre problème callback non appelé dans ODWindow (ou mettre static ODWindow* g_currentWindow = nullptr ?)
 - problème touches zqsd
 - refactoring caméra
+- setup facile du projet
