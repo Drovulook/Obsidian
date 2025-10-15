@@ -48,7 +48,7 @@ namespace ODEngine {
 
             void bind(VkCommandBuffer commandBuffer);
 
-            static void defaultPipelineConfigInfo(ODPipelineConfigInfo& configInfo);
+            static void defaultPipelineConfigInfo(ODDevice& device, ODPipelineConfigInfo& configInfo);
             static void enableAlphaBlending(ODPipelineConfigInfo& configInfo);
 
         private:

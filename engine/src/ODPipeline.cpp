@@ -121,7 +121,7 @@ namespace ODEngine {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
     }
 
-    void ODPipeline::defaultPipelineConfigInfo(ODPipelineConfigInfo& configInfo){
+    void ODPipeline::defaultPipelineConfigInfo(ODDevice& device, ODPipelineConfigInfo& configInfo){
         
         // inputAssembly
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -151,7 +151,7 @@ namespace ODEngine {
         //multisampling (anti-aliasing)
         configInfo.multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         configInfo.multisampleInfo.sampleShadingEnable = VK_FALSE;
-        configInfo.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        configInfo.multisampleInfo.rasterizationSamples = device.getMsaaSamples();
         configInfo.multisampleInfo.minSampleShading = 1.0f;           // Optional
         configInfo.multisampleInfo.pSampleMask = nullptr;             // Optional
         configInfo.multisampleInfo.alphaToCoverageEnable = VK_FALSE;  // Optional

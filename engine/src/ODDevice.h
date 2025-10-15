@@ -45,6 +45,7 @@ class ODDevice {
   VkSurfaceKHR surface() { return surface_; }
   VkQueue graphicsQueue() { return graphicsQueue_; }
   VkQueue presentQueue() { return presentQueue_; }
+  VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
 
   SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice_); }
   uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -75,6 +76,8 @@ class ODDevice {
       VkImage &image,
       VkDeviceMemory &imageMemory);
 
+  VkSampleCountFlagBits getMaxUsableSampleCount();
+
   VkPhysicalDeviceProperties properties;
 
  private:
@@ -100,6 +103,8 @@ class ODDevice {
   VkPhysicalDevice physicalDevice_ = VK_NULL_HANDLE;
   ODWindow &m_window;
   VkCommandPool commandPool;
+
+  VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
   VkDevice device_;
   VkSurfaceKHR surface_;

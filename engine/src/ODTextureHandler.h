@@ -19,9 +19,6 @@ namespace ODEngine {
         VkDescriptorImageInfo descriptorInfo();
     
     private:
-            void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling,
-                VkImageUsageFlags usage, VkMemoryPropertyFlags properties);
-        
             void createTextureImage(const std::string& filepath);
             void createTextureImageView();
             void createTextureSampler();

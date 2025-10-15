@@ -48,12 +48,15 @@ class ODSwapChain {
   }
 
   static VkImageView createImageView(ODDevice &app_device, VkImage image, VkFormat format, uint32_t mipLevels = 1);
+  static void createImage(ODDevice& app_device, uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
+      VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory);
 
  private:
  void init();
   void createSwapChain();
   void createImageViews();
   void createDepthResources();
+  void createMsaaColorResources();
   void createRenderPass();
   void createFramebuffers();
   void createSyncObjects();
@@ -89,6 +92,11 @@ class ODSwapChain {
   std::vector<VkFence> inFlightFences;
   std::vector<VkFence> imagesInFlight;
   size_t currentFrame = 0;
+
+  // for multisampling
+  VkImage msaaColorImage;
+  VkDeviceMemory msaaColorImageMemory;
+  VkImageView msaaColorImageView;
 };
 
-}  // namespace lve
+}  // namespace ODEngine

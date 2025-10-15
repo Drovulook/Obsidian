@@ -55,7 +55,7 @@ namespace ODEngine {
         m_pipeline.reset();
 
         ODPipelineConfigInfo pipelineConfig{};
-        ODPipeline::defaultPipelineConfigInfo(pipelineConfig);
+        ODPipeline::defaultPipelineConfigInfo(m_device, pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
