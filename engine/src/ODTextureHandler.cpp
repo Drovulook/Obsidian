@@ -80,7 +80,7 @@ namespace ODEngine {
     }
 
     void ODTextureHandler::createTextureImageView() {
-        m_textureImageView = ODSwapChain::createImageView(m_device, m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, m_mipLevels);
+        m_textureImageView = ODSwapChain::createImageView(m_device, m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_mipLevels);
     }
 
     void ODTextureHandler::createTextureSampler() {

@@ -211,13 +211,13 @@ void ODSwapChain::createSwapChain() {
   swapChainExtent = extent;
 }
 
-VkImageView ODSwapChain::createImageView(ODDevice &app_device, VkImage image, VkFormat format, uint32_t mipLevels){
+VkImageView ODSwapChain::createImageView(ODDevice &app_device, VkImage image, VkFormat format, VkImageAspectFlags aspectMask, uint32_t mipLevels){
   VkImageViewCreateInfo viewInfo{};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = image;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.format = format;
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.aspectMask = aspectMask;
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.levelCount = mipLevels;
     viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -234,7 +234,7 @@ VkImageView ODSwapChain::createImageView(ODDevice &app_device, VkImage image, Vk
 void ODSwapChain::createImageViews() {
   swapChainImageViews.resize(swapChainImages.size());
   for (size_t i = 0; i < swapChainImages.size(); i++) {
-    swapChainImageViews[i] = createImageView(device, swapChainImages[i], swapChainImageFormat);
+    swapChainImageViews[i] = createImageView(device, swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
   }
 }
 
@@ -346,42 +346,9 @@ void ODSwapChain::createDepthResources() {
   depthImageViews.resize(imageCount());
 
   for (int i = 0; i < depthImages.size(); i++) {
-    VkImageCreateInfo imageInfo{};
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent.width = swapChainExtent.width;
-    imageInfo.extent.height = swapChainExtent.height;
-    imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 1;
-    imageInfo.format = depthFormat;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    imageInfo.samples = device.getMsaaSamples();
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageInfo.flags = 0;
-
-    device.createImageWithInfo(
-        imageInfo,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        depthImages[i],
-        depthImageMemorys[i]);
-
-    VkImageViewCreateInfo viewInfo{};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = depthImages[i];
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = depthFormat;
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-
-    if (vkCreateImageView(device.device(), &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS) {
-      throw std::runtime_error("failed to create texture image view!");
-    }
+    createImage(device, swapChainExtent.width, swapChainExtent.height, 1, device.getMsaaSamples(), depthFormat, VK_IMAGE_TILING_OPTIMAL, 
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImages[i], depthImageMemorys[i]);
+    createImageView(device, depthImages[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
   }
 }
 
@@ -428,7 +395,7 @@ void ODSwapChain::createMsaaColorResources() {
 
     createImage(device, swapChainExtent.width, swapChainExtent.height, 1, device.getMsaaSamples(), colorFormat, VK_IMAGE_TILING_OPTIMAL, 
       VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, msaaColorImage, msaaColorImageMemory);
-    msaaColorImageView = createImageView(device, msaaColorImage, colorFormat, 1); // vérifier
+    msaaColorImageView = createImageView(device, msaaColorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1); // vérifier
 }
 
 void ODSwapChain::createSyncObjects() {
