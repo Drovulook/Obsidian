@@ -150,9 +150,9 @@ namespace ODEngine {
 
         //multisampling (anti-aliasing)
         configInfo.multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-        configInfo.multisampleInfo.sampleShadingEnable = VK_FALSE;
+        configInfo.multisampleInfo.sampleShadingEnable = VK_TRUE; // enable sample shading in the pipeline
         configInfo.multisampleInfo.rasterizationSamples = device.getMsaaSamples();
-        configInfo.multisampleInfo.minSampleShading = 1.0f;           // Optional
+        configInfo.multisampleInfo.minSampleShading = .2f; // min fraction for sample shading; closer to one is smooth
         configInfo.multisampleInfo.pSampleMask = nullptr;             // Optional
         configInfo.multisampleInfo.alphaToCoverageEnable = VK_FALSE;  // Optional
         configInfo.multisampleInfo.alphaToOneEnable = VK_FALSE;       // Optional

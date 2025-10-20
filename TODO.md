@@ -6,3 +6,5 @@
 - refactoring caméra
 - setup facile du projet
 - Pourquoi anti-aliasing limité à VK_SAMPLE_COUNT_8_BIT ?
+- shadow mapping
+- post-processing
