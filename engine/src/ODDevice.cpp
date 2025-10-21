@@ -138,7 +138,7 @@ void ODDevice::createLogicalDevice() {
   QueueFamilyIndices indices = findQueueFamilies(physicalDevice_);
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily, indices.presentFamily};
+  std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsAndComputeFamily, indices.presentFamily};
 
   float queuePriority = 1.0f;
   for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -177,7 +177,8 @@ void ODDevice::createLogicalDevice() {
     throw std::runtime_error("failed to create logical device!");
   }
 
-  vkGetDeviceQueue(device_, indices.graphicsFamily, 0, &graphicsQueue_);
+  vkGetDeviceQueue(device_, indices.graphicsAndComputeFamily, 0, &graphicsQueue_);
+  vkGetDeviceQueue(device_, indices.graphicsAndComputeFamily, 0, &computeQueue_);
   vkGetDeviceQueue(device_, indices.presentFamily, 0, &presentQueue_);
 }
 
@@ -186,7 +187,7 @@ void ODDevice::createCommandPool() {
 
   VkCommandPoolCreateInfo poolInfo = {};
   poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsAndComputeFamily ;
   poolInfo.flags =
       VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
@@ -330,9 +331,11 @@ QueueFamilyIndices ODDevice::findQueueFamilies(VkPhysicalDevice device) {
 
   int i = 0;
   for (const auto &queueFamily : queueFamilies) {
-    if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-      indices.graphicsFamily = i;
-      indices.graphicsFamilyHasValue = true;
+    if ( (queueFamily.queueCount > 0) 
+        && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) 
+        && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)) {
+      indices.graphicsAndComputeFamily  = i;
+      indices.graphicsAndComputeFamilyHasValue = true;
     }
     VkBool32 presentSupport = false;
     vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface_, &presentSupport);

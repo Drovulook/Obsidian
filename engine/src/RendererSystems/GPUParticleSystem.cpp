@@ -1,4 +1,5 @@
-#include "SimpleRendererSystem.h"
+#include "GPUParticleSystem.h"
+#include "Particle.h"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -20,17 +21,17 @@ namespace ODEngine {
         // alignas(16)glm::vec3 color;
     };
 
-    SimpleRendererSystem::SimpleRendererSystem(ODDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) 
+    GPUParticleSystem::GPUParticleSystem(ODDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) 
     : m_device(device) {
-        createPipelineLayout(globalSetLayout);
-        createPipeline(renderPass);
+        createGraphicsPipelineLayout(globalSetLayout);
+        createGraphicsPipeline(renderPass);
     }
 
-    SimpleRendererSystem::~SimpleRendererSystem(){
+    GPUParticleSystem::~GPUParticleSystem(){
         vkDestroyPipelineLayout(m_device.device(), m_pipelineLayout, nullptr);
     }
 
-    void SimpleRendererSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout){
+    void GPUParticleSystem::createGraphicsPipelineLayout(VkDescriptorSetLayout globalSetLayout){
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
@@ -49,24 +50,24 @@ namespace ODEngine {
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
-    void SimpleRendererSystem::createPipeline(VkRenderPass renderPass) {
+    void GPUParticleSystem::createGraphicsPipeline(VkRenderPass renderPass) {
         assert(m_pipelineLayout != nullptr && "Pipeline layout must be created before creating the pipeline");
 
         m_pipeline.reset();
 
-        ODGraphicsPipelineConfigInfo pipelineConfig{};
-        ODGraphicsPipeline::defaultPipelineConfigInfo(m_device, pipelineConfig);
+        ODPipelineConfigInfo pipelineConfig{};
+        ODPipeline::defaultPipelineConfigInfo(m_device, pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-        m_pipeline = std::make_unique<ODGraphicsPipeline>(
+        m_pipeline = std::make_unique<ODPipeline>(
             m_device, 
             ENGINE_PATH "/shaders/compiled/simple_shader.vert.spv", 
             ENGINE_PATH "/shaders/compiled/simple_shader.frag.spv",
             pipelineConfig);
     }
 
-    void SimpleRendererSystem::renderGameObjects(FrameInfo& frameInfo){
+    void GPUParticleSystem::render(FrameInfo& frameInfo){
 
         m_pipeline->bind(frameInfo.commandBuffer);
         
@@ -81,25 +82,7 @@ namespace ODEngine {
             nullptr
         );
 
-        for (auto& kv : frameInfo.gameObjects) {
-            auto& obj = kv.second;
-            if(obj.model == nullptr) continue;
-
-            SimplePushConstantData push{};
-            push.modelMatrix = obj.transform.mat4();
-            push.normalMatrix = obj.transform.normalMatrix();
-
-            vkCmdPushConstants(
-                frameInfo.commandBuffer,
-                m_pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0, // offset
-                sizeof(SimplePushConstantData),
-                &push
-            );
-            obj.model->bind(frameInfo.commandBuffer);
-            obj.model->draw(frameInfo.commandBuffer);
-        }
+        vkCmdDispatch(frameInfo.commandBuffer, ODParticles::PARTICLE_COUNT / 256, 1, 1);
     }
 
 }

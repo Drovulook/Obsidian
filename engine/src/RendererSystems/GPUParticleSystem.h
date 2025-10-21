@@ -6,34 +6,31 @@
 #include "ODGameObject.h"
 #include "ODPipeline.h"
 #include "ODFrameInfo.h"
-#include "ODModel.h"
 
 // std
 #include <memory>
 #include <vector>
 
 namespace ODEngine {
-    class GridSystem {
+    class GPUParticleSystem {
         public:
 
-            GridSystem(ODDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
-            virtual ~GridSystem();
+            GPUParticleSystem(ODDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+            virtual ~GPUParticleSystem();
 
-            GridSystem(const GridSystem&) = delete;
-            GridSystem& operator=(const GridSystem&) = delete;
+            GPUParticleSystem(const GPUParticleSystem&) = delete;
+            GPUParticleSystem& operator=(const GPUParticleSystem&) = delete;
             
             void render(FrameInfo& frameInfo);
 
         private:
-            void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
-            void createPipeline(VkRenderPass renderPass);
+            void createGraphicsPipelineLayout(VkDescriptorSetLayout globalSetLayout);
+            void createGraphicsPipeline(VkRenderPass renderPass);
 
         private:
             ODDevice& m_device;
             std::unique_ptr<ODGraphicsPipeline> m_pipeline;
             VkPipelineLayout m_pipelineLayout = nullptr;
-
-            std::unique_ptr<ODModel> m_grid;
     };
 
 }

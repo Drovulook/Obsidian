@@ -42,6 +42,8 @@ namespace ODEngine {
 
             std::shared_ptr<ODGameObject> m_cameraObject = nullptr;
 
+            std::vector<std::unique_ptr<ODBuffer>> m_computeBuffers;
+
         protected:
             ODGameObject::Map m_gameObjects;
             std::shared_ptr<ODTextureHandler> m_textureHandler = nullptr;

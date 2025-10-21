@@ -60,13 +60,13 @@ namespace ODEngine {
 
         m_pipeline.reset();
 
-        ODPipelineConfigInfo pipelineConfig{};
-        ODPipeline::defaultPipelineConfigInfo(m_device, pipelineConfig);
-        ODPipeline::enableAlphaBlending(pipelineConfig);
+        ODGraphicsPipelineConfigInfo pipelineConfig{};
+        ODGraphicsPipeline::defaultPipelineConfigInfo(m_device, pipelineConfig);
+        ODGraphicsPipeline::enableAlphaBlending(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-        m_pipeline = std::make_unique<ODPipeline>(
+        m_pipeline = std::make_unique<ODGraphicsPipeline>(
             m_device, 
             ENGINE_PATH "/shaders/compiled/grid_shader.vert.spv", 
             ENGINE_PATH "/shaders/compiled/grid_shader.frag.spv",

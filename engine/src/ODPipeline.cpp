@@ -9,21 +9,23 @@
 #include "ODModel.h"
 
 namespace ODEngine {
-    ODPipeline::ODPipeline(
-        ODDevice &device, 
-        const std::string &vertexShaderPath, 
-        const std::string &fragmentShaderPath, 
-        const ODPipelineConfigInfo &configInfo): m_device(device) {
-            createGraphicsPipeline(vertexShaderPath, fragmentShaderPath, configInfo);
+
+    ////////////////////////////////////////////// ODBasePipeline //////////////////////////////////////////////
+
+    ODBasePipeline::ODBasePipeline(ODDevice &device) : m_device(device) {}
+
+    void ODBasePipeline::createShaderModule(const std::vector<char> &code, VkShaderModule &shaderModule) {
+        VkShaderModuleCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        createInfo.codeSize = code.size();
+        createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+
+        if(vkCreateShaderModule(m_device.device(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create shader module!");
+        }
     }
 
-    ODPipeline::~ODPipeline(){
-        vkDestroyShaderModule(m_device.device(), m_fragShaderModule, nullptr);
-        vkDestroyShaderModule(m_device.device(), m_vertShaderModule, nullptr);
-        vkDestroyPipeline(m_device.device(), m_graphicsPipeline, nullptr);
-    }
-
-    std::vector<char> ODPipeline::readFile(const std::string &filename){
+    std::vector<char> ODBasePipeline::readFile(const std::string &filename) {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
         if(!file.is_open()) {
@@ -39,10 +41,26 @@ namespace ODEngine {
         return buffer;
     }
 
-    void ODPipeline::createGraphicsPipeline(const std::string &vertexShaderPath, 
-        const std::string &fragmentShaderPath, const ODPipelineConfigInfo &configInfo){
+    ////////////////////////////////////////// ODBaseGraphicsPipeline //////////////////////////////////////////
+
+    ODGraphicsPipeline::ODGraphicsPipeline(
+        ODDevice &device, 
+        const std::string &vertexShaderPath, 
+        const std::string &fragmentShaderPath, 
+        const ODGraphicsPipelineConfigInfo &configInfo): ODBasePipeline(device) {
+            createGraphicsPipeline(vertexShaderPath, fragmentShaderPath, configInfo);
+    }
+
+    ODGraphicsPipeline::~ODGraphicsPipeline(){
+        vkDestroyShaderModule(m_device.device(), m_fragShaderModule, nullptr);
+        vkDestroyShaderModule(m_device.device(), m_vertShaderModule, nullptr);
+        vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
+    }
+
+    void ODGraphicsPipeline::createGraphicsPipeline(const std::string &vertexShaderPath, 
+        const std::string &fragmentShaderPath, const ODGraphicsPipelineConfigInfo &configInfo){
         
-         assert(
+        assert(
             configInfo.pipelineLayout != nullptr &&
             "Cannot create graphics pipeline: no pipelineLayout provided in config info");
         assert(
@@ -101,27 +119,16 @@ namespace ODEngine {
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;  // Optional
         pipelineInfo.basePipelineIndex = -1;               // Optional
 
-        if(vkCreateGraphicsPipelines(m_device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline) != VK_SUCCESS) {
+        if(vkCreateGraphicsPipelines(m_device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline) != VK_SUCCESS) {
             throw std::runtime_error("failed to create graphics pipeline!");
         }
     }
-    
-    void ODPipeline::createShaderModule(const std::vector<char> &code, VkShaderModule &shaderModule){
-        VkShaderModuleCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        createInfo.codeSize = code.size();
-        createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
-        if(vkCreateShaderModule(m_device.device(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create shader module!");
-        }
+    void ODGraphicsPipeline::bind(VkCommandBuffer commandBuffer){
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
     }
 
-    void ODPipeline::bind(VkCommandBuffer commandBuffer){
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
-    }
-
-    void ODPipeline::defaultPipelineConfigInfo(ODDevice& device, ODPipelineConfigInfo& configInfo){
+    void ODGraphicsPipeline::defaultPipelineConfigInfo(ODDevice& device, ODGraphicsPipelineConfigInfo& configInfo){
         
         // inputAssembly
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -202,7 +209,7 @@ namespace ODEngine {
 
     }
 
-    void ODPipeline::enableAlphaBlending(ODPipelineConfigInfo &configInfo){
+    void ODGraphicsPipeline::enableAlphaBlending(ODGraphicsPipelineConfigInfo &configInfo){
         configInfo.colorBlendAttachment.blendEnable = VK_TRUE;
         
         configInfo.colorBlendAttachment.colorWriteMask =
@@ -213,5 +220,43 @@ namespace ODEngine {
         configInfo.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; 
         configInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
         configInfo.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;            
+    }
+
+    ////////////////////////////////////////// ODBaseComputePipeline ///////////////////////////////////////////
+    
+    
+    ODComputePipeline::ODComputePipeline(
+        ODDevice &device, const std::string &computeShaderPath, const ODGraphicsPipelineConfigInfo &configInfo) 
+        : ODBasePipeline(m_device) {}
+
+    void ODComputePipeline::createComputePipeline(const std::string &computeShaderPath, const ODGraphicsPipelineConfigInfo &configInfo) {
+        assert(
+            configInfo.pipelineLayout != nullptr &&
+            "Cannot create graphics pipeline: no pipelineLayout provided in config info");
+        assert(
+            configInfo.renderPass != nullptr &&
+            "Cannot create graphics pipeline: no renderPass provided in config info");
+        
+        auto computeShaderCode = readFile(computeShaderPath);
+
+        createShaderModule(computeShaderCode, m_computeShaderModule);
+
+        VkPipelineShaderStageCreateInfo computeShaderStageInfo {};
+        computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+        computeShaderStageInfo.module = m_computeShaderModule;
+        computeShaderStageInfo.pName = "main"; 
+        computeShaderStageInfo.flags = 0;
+        computeShaderStageInfo.pNext = nullptr;
+        computeShaderStageInfo.pSpecializationInfo = nullptr;
+
+        VkComputePipelineCreateInfo pipelineInfo{};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        pipelineInfo.layout = configInfo.pipelineLayout;
+        pipelineInfo.stage = computeShaderStageInfo;
+
+        if (vkCreateComputePipelines(m_device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create compute pipeline!");
+        }
     }
 }

@@ -4,7 +4,9 @@
 #include "RendererSystems/SimpleRendererSystem.h"
 #include "RendererSystems/PointLightSystem.h"
 #include "RendererSystems/GridSystem.h"
+#include "RendererSystems/GPUParticleSystem.h"
 #include "ODBuffer.h"
+#include "Particle.h"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -26,6 +28,7 @@ namespace ODEngine {
             .setMaxSets(ODSwapChain::MAX_FRAMES_IN_FLIGHT)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ODSwapChain::MAX_FRAMES_IN_FLIGHT)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ODSwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, ODSwapChain::MAX_FRAMES_IN_FLIGHT * 2)
             .build();
     
         m_textureHandler = std::make_shared<ODTextureHandler>(m_device);
@@ -36,6 +39,48 @@ namespace ODEngine {
     }
 
     void App::run() {
+
+        // compute shaders
+        std::default_random_engine rndEngine((unsigned)time(nullptr));
+        std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
+
+        m_computeBuffers.resize(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
+        std::vector<ODParticles::Particle> particles(ODParticles::PARTICLE_COUNT);
+        for (auto& particle : particles) {
+            float r = 0.25f * sqrt(rndDist(rndEngine));
+            float theta = rndDist(rndEngine) * 2 * 3.14159265358979323846;
+            float x = r * cos(theta) * HEIGHT / WIDTH;
+            float y = r * sin(theta);
+            particle.position = glm::vec2(x, y);
+            particle.velocity = glm::normalize(glm::vec2(x,y)) * 0.00025f;
+            particle.color = glm::vec4(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine), 1.0f);
+        }
+
+        ODBuffer computeStagingBuffer = ODBuffer {
+                m_device,
+                sizeof(ODParticles::Particle),
+                ODParticles::PARTICLE_COUNT,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+        };
+        computeStagingBuffer.map();
+       computeStagingBuffer.writeToBuffer((void*)particles.data());
+
+       for (size_t i = 0; i < ODSwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
+        m_computeBuffers[i] = std::make_unique<ODBuffer>( // liste de listes (2*2) plutôt ?
+               m_device,
+               sizeof(ODParticles::Particle),
+               ODParticles::PARTICLE_COUNT,
+               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+           );
+        m_device.copyBuffer(
+               computeStagingBuffer.getBuffer(),
+               m_computeBuffers[i]->getBuffer(),
+               sizeof(ODParticles::Particle) * ODParticles::PARTICLE_COUNT
+           );
+       }
+
 
         std::vector<std::unique_ptr<ODBuffer>> uboBuffers(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i=0; i < uboBuffers.size(); i++) {
@@ -52,16 +97,23 @@ namespace ODEngine {
         auto globalSetLayout = ODDescriptorSetLayout::Builder(m_device)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            
+            // computer shader binding
+            .addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
+            .addBinding(3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
+            
             .build();
 
         std::vector<VkDescriptorSet> globalDescriptorSets(ODSwapChain::MAX_FRAMES_IN_FLIGHT); // 1 descriptor set per frame
         for(int i=0; i < globalDescriptorSets.size(); i++) {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
-            auto imageInfo = m_textureHandler->descriptorInfo();
+            auto imageInfo = m_textureHandler->descriptorInfo();;
 
             ODDescriptorWriter(*globalSetLayout, *m_globalDescriptorPool)
                 .writeBuffer(0, &bufferInfo)
                 .writeImage(1, &imageInfo)
+                .writeBuffer(2, &m_computeBuffers[0]->descriptorInfo())
+                .writeBuffer(3, &m_computeBuffers[1]->descriptorInfo())
                 .build(globalDescriptorSets[i]);
         }
 

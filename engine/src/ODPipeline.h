@@ -8,11 +8,11 @@
 #include <vulkan/vulkan.h> //pas obligatoire (voir ODWindow.h)
 
 namespace ODEngine {
-    struct ODPipelineConfigInfo {
-        ODPipelineConfigInfo() = default;
+    struct ODGraphicsPipelineConfigInfo {
+        ODGraphicsPipelineConfigInfo() = default;
 
-        ODPipelineConfigInfo(const ODPipelineConfigInfo&) = delete;
-        ODPipelineConfigInfo& operator=(const ODPipelineConfigInfo&) = delete;
+        ODGraphicsPipelineConfigInfo(const ODGraphicsPipelineConfigInfo&) = delete;
+        ODGraphicsPipelineConfigInfo& operator=(const ODGraphicsPipelineConfigInfo&) = delete;
 
         std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
@@ -31,40 +31,65 @@ namespace ODEngine {
 
     };
 
-    class ODPipeline {
+    class ODBasePipeline {
         public:
-            ODPipeline(
+            ODBasePipeline(ODDevice& device);
+            virtual ~ODBasePipeline() = default;
+        
+        protected:
+            void createShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule);
+            static std::vector<char> readFile(const std::string& filename);
+            
+            ODDevice& m_device;
+            VkPipeline m_pipeline;
+    };
+
+    class ODGraphicsPipeline : public ODBasePipeline {
+        public:
+            ODGraphicsPipeline(
                 ODDevice& device, 
                 const std::string& vertexShaderPath, 
                 const std::string& fragmentShaderPath,
-                const ODPipelineConfigInfo& configInfo
+                const ODGraphicsPipelineConfigInfo& configInfo
             );
-            ODPipeline() = default;
+            ODGraphicsPipeline() = default;
 
-            ~ODPipeline();
+            ~ODGraphicsPipeline() override;
 
-            ODPipeline(const ODPipeline&) = delete;
-            ODPipeline& operator=(const ODPipeline&) = delete;
+            ODGraphicsPipeline(const ODGraphicsPipeline&) = delete;
+            ODGraphicsPipeline& operator=(const ODGraphicsPipeline&) = delete;
 
             void bind(VkCommandBuffer commandBuffer);
 
-            static void defaultPipelineConfigInfo(ODDevice& device, ODPipelineConfigInfo& configInfo);
-            static void enableAlphaBlending(ODPipelineConfigInfo& configInfo);
+            static void defaultPipelineConfigInfo(ODDevice& device, ODGraphicsPipelineConfigInfo& configInfo);
+            static void enableAlphaBlending(ODGraphicsPipelineConfigInfo& configInfo);
 
         private:
-            static std::vector<char> readFile(const std::string& filename);
-            
             void createGraphicsPipeline(
                 const std::string& vertexShaderPath, 
                 const std::string& fragmentShaderPath,
-                const ODPipelineConfigInfo& configInfo
+                const ODGraphicsPipelineConfigInfo& configInfo
             );
 
-            void createShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule);
-
-            ODDevice& m_device;
-            VkPipeline m_graphicsPipeline;
             VkShaderModule m_vertShaderModule;
             VkShaderModule m_fragShaderModule;
+        };
+        
+        class ODComputePipeline : public ODBasePipeline {
+            public:
+            ODComputePipeline(
+                ODDevice& device, 
+                const std::string &computeShaderPath, 
+                const ODGraphicsPipelineConfigInfo& configInfo);
+                
+                ODComputePipeline() = default;
+                ~ODComputePipeline() override;
+                
+            private:
+                void createComputePipeline(const std::string &computeShaderPath, const ODGraphicsPipelineConfigInfo &configInfo);
+                
+                VkShaderModule m_computeShaderModule;
+
     };
+
 }
