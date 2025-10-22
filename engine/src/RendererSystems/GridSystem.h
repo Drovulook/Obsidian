@@ -30,7 +30,7 @@ namespace ODEngine {
 
         private:
             ODDevice& m_device;
-            std::unique_ptr<ODGraphicsPipeline> m_pipeline;
+            std::unique_ptr<ODGraphicsPipeline> m_odPipeline;
             VkPipelineLayout m_pipelineLayout = nullptr;
 
             std::unique_ptr<ODModel> m_grid;

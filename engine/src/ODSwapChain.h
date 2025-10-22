@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ODDevice.h"
+#include "ODFrameInfo.h"
 
 // vulkan headers
 #include <vulkan/vulkan.h>
@@ -32,6 +33,8 @@ class ODSwapChain {
   VkExtent2D getSwapChainExtent() { return swapChainExtent; }
   uint32_t width() { return swapChainExtent.width; }
   uint32_t height() { return swapChainExtent.height; }
+  std::vector<VkSemaphore> computeFinishedSemaphores() { return computeFinishedSemaphores_; }
+  std::vector<VkFence> computeInFlightFences() { return computeInFlightFences_; }
 
   float extentAspectRatio() {
     return static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height);
@@ -40,6 +43,8 @@ class ODSwapChain {
 
   VkResult acquireNextImage(uint32_t *imageIndex);
   VkResult submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
+  // VkResult submitComputeCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
+  // void recordComputeCommandBuffer(VkCommandBuffer commandBuffer, FrameInfo& frameInfo);
   void waitForImageToBeAvailable(uint32_t imageIndex);
 
   bool compareSwapFormats(const ODSwapChain &swapChain) const {
@@ -89,8 +94,10 @@ class ODSwapChain {
 
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
+  std::vector<VkSemaphore> computeFinishedSemaphores_;
   std::vector<VkFence> inFlightFences;
   std::vector<VkFence> imagesInFlight;
+  std::vector<VkFence> computeInFlightFences_;
   size_t currentFrame = 0;
 
   // for multisampling

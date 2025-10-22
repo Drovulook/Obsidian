@@ -1,4 +1,5 @@
 #include "ODSwapChain.h"
+#include "Particle.h"
 
 // std
 #include <array>
@@ -64,9 +65,11 @@ ODSwapChain::~ODSwapChain() {
   for (size_t i = 0; i < imageCount(); i++) {
     vkDestroySemaphore(device.device(), renderFinishedSemaphores[i], nullptr);
     vkDestroySemaphore(device.device(), imageAvailableSemaphores[i], nullptr);
+    vkDestroySemaphore(device.device(), computeFinishedSemaphores_[i], nullptr);
   }
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     vkDestroyFence(device.device(), inFlightFences[i], nullptr);
+    vkDestroyFence(device.device(), computeInFlightFences_[i], nullptr);
   }
 }
 
@@ -100,7 +103,7 @@ VkResult ODSwapChain::submitCommandBuffers(
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
   // IMPORTANT: Utilise currentFrame pour wait (correspond à acquire) mais imageIndex pour signal
-  VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+  VkSemaphore waitSemaphores[] = {computeFinishedSemaphores_[currentFrame], imageAvailableSemaphores[currentFrame]};
   VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   submitInfo.waitSemaphoreCount = 1;
   submitInfo.pWaitSemaphores = waitSemaphores;
@@ -137,6 +140,44 @@ VkResult ODSwapChain::submitCommandBuffers(
 
   return result;
 }
+
+// VkResult ODSwapChain::submitComputeCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex)
+// {
+//     vkWaitForFences(device.device(), 1, &computeInFlightFences_[currentFrame], VK_TRUE, UINT64_MAX);
+
+//         vkResetFences(device.device(), 1, &computeInFlightFences_[currentFrame]);
+
+//         vkResetCommandBuffer(computeCommandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
+//         recordComputeCommandBuffer(computeCommandBuffers[currentFrame]);
+//         VkSubmitInfo submitInfo{};
+//         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+//         submitInfo.commandBufferCount = 1;
+//         submitInfo.pCommandBuffers = &computeCommandBuffers[currentFrame];
+//         submitInfo.signalSemaphoreCount = 1;
+//         submitInfo.pSignalSemaphores = &computeFinishedSemaphores_[currentFrame];
+
+//         if (vkQueueSubmit(computeQueue, 1, &submitInfo, computeInFlightFences_[currentFrame]) != VK_SUCCESS) {
+//             throw std::runtime_error("failed to submit compute command buffer!");
+//         };
+// }
+
+// void ODSwapChain::recordComputeCommandBuffer(VkCommandBuffer commandBuffer, FrameInfo &frameInfo) {
+//   VkCommandBufferBeginInfo beginInfo{};
+//   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+//   if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+//       throw std::runtime_error("failed to begin recording compute command buffer!");
+//   }
+//   m_odPipeline->bind(commandBuffer);
+
+//   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+
+//   vkCmdDispatch(commandBuffer, ODParticles::PARTICLE_COUNT / 256, 1, 1);
+
+//   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+//       throw std::runtime_error("failed to record compute command buffer!");
+//   }
+// }
 
 void ODSwapChain::waitForImageToBeAvailable(uint32_t imageIndex) {
   // Attendre que cette image ne soit plus en cours d'utilisation
@@ -348,7 +389,8 @@ void ODSwapChain::createDepthResources() {
   for (int i = 0; i < depthImages.size(); i++) {
     createImage(device, swapChainExtent.width, swapChainExtent.height, 1, device.getMsaaSamples(), depthFormat, VK_IMAGE_TILING_OPTIMAL, 
       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImages[i], depthImageMemorys[i]);
-    createImageView(device, depthImages[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+      depthImageViews[i] = createImageView(device, depthImages[i], depthFormat, 
+        VK_IMAGE_ASPECT_DEPTH_BIT, 1);  // Ajout de l'assignation depthImageViews[i] = ...
   }
 }
 
@@ -402,10 +444,12 @@ void ODSwapChain::createSyncObjects() {
   // Un sémaphore par image du swap chain (recommandation Vulkan)
   imageAvailableSemaphores.resize(imageCount());
   renderFinishedSemaphores.resize(imageCount());
+  computeFinishedSemaphores_.resize(imageCount());
   
   // Fences par frame en vol
   inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
   imagesInFlight.resize(imageCount(), VK_NULL_HANDLE);
+  computeInFlightFences_.resize(MAX_FRAMES_IN_FLIGHT);
 
   VkSemaphoreCreateInfo semaphoreInfo = {};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -416,18 +460,20 @@ void ODSwapChain::createSyncObjects() {
 
   // Créer les sémaphores pour chaque image
   for (size_t i = 0; i < imageCount(); i++) {
-    if (vkCreateSemaphore(device.device(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) !=
-            VK_SUCCESS ||
-        vkCreateSemaphore(device.device(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) !=
-            VK_SUCCESS) {
-      throw std::runtime_error("failed to create synchronization objects for image!");
+    if (vkCreateSemaphore(device.device(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) !=VK_SUCCESS ||
+        vkCreateSemaphore(device.device(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) !=VK_SUCCESS) {
+      throw std::runtime_error("failed to create graphics synchronization objects for image!");
     }
   }
 
   // Créer les fences pour les frames
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     if (vkCreateFence(device.device(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
-      throw std::runtime_error("failed to create synchronization objects for frame!");
+      throw std::runtime_error("failed to create graphics synchronization objects for frame!");
+    }
+    if (vkCreateSemaphore(device.device(), &semaphoreInfo, nullptr, &computeFinishedSemaphores_[i]) ||
+      vkCreateFence(device.device(), &fenceInfo, nullptr, &computeInFlightFences_[i]) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create compute synchronization objects for a frame!");
     }
   }
 }
@@ -483,10 +529,10 @@ VkExtent2D ODSwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabil
 }
 
 VkFormat ODSwapChain::findDepthFormat() {
-  return device.findSupportedFormat(
+      return device.findSupportedFormat(
       {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
       VK_IMAGE_TILING_OPTIMAL,
       VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-}  // namespace lve
+}  // namespace ODEngine

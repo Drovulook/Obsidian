@@ -57,7 +57,7 @@ namespace ODEngine {
     void PointLightSystem::createPipeline(VkRenderPass renderPass) {
         assert(m_pipelineLayout != nullptr && "Pipeline layout must be created before creating the pipeline");
 
-        m_pipeline.reset();
+        m_odPipeline.reset();
 
         ODGraphicsPipelineConfigInfo pipelineConfig{};
         ODGraphicsPipeline::defaultPipelineConfigInfo(m_device, pipelineConfig);
@@ -67,7 +67,7 @@ namespace ODEngine {
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-        m_pipeline = std::make_unique<ODGraphicsPipeline>(
+        m_odPipeline = std::make_unique<ODGraphicsPipeline>(
             m_device, 
             ENGINE_PATH "/shaders/compiled/point_light_shader.vert.spv", 
             ENGINE_PATH "/shaders/compiled/point_light_shader.frag.spv",
@@ -107,7 +107,7 @@ namespace ODEngine {
             sorted[distanceSquared] = obj.getId();
         }
 
-        m_pipeline->bind(frameInfo.commandBuffer);
+        m_odPipeline->bind(frameInfo.commandBuffer);
         
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,

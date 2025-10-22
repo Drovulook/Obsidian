@@ -58,7 +58,7 @@ namespace ODEngine {
     void GridSystem::createPipeline(VkRenderPass renderPass) {
         assert(m_pipelineLayout != nullptr && "Pipeline layout must be created before creating the pipeline");
 
-        m_pipeline.reset();
+        m_odPipeline.reset();
 
         ODGraphicsPipelineConfigInfo pipelineConfig{};
         ODGraphicsPipeline::defaultPipelineConfigInfo(m_device, pipelineConfig);
@@ -66,7 +66,7 @@ namespace ODEngine {
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-        m_pipeline = std::make_unique<ODGraphicsPipeline>(
+        m_odPipeline = std::make_unique<ODGraphicsPipeline>(
             m_device, 
             ENGINE_PATH "/shaders/compiled/grid_shader.vert.spv", 
             ENGINE_PATH "/shaders/compiled/grid_shader.frag.spv",
@@ -75,7 +75,7 @@ namespace ODEngine {
 
     void GridSystem::render(FrameInfo& frameInfo){
 
-        m_pipeline->bind(frameInfo.commandBuffer);
+        m_odPipeline->bind(frameInfo.commandBuffer);
         
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,

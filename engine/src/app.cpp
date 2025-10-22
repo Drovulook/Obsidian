@@ -60,8 +60,8 @@ namespace ODEngine {
                 m_device,
                 sizeof(ODParticles::Particle),
                 ODParticles::PARTICLE_COUNT,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT, // vérifier
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
         };
         computeStagingBuffer.map();
        computeStagingBuffer.writeToBuffer((void*)particles.data());
@@ -95,7 +95,7 @@ namespace ODEngine {
         }
 
         auto globalSetLayout = ODDescriptorSetLayout::Builder(m_device)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS | VK_SHADER_STAGE_COMPUTE_BIT)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
             
             // computer shader binding
@@ -107,19 +107,22 @@ namespace ODEngine {
         std::vector<VkDescriptorSet> globalDescriptorSets(ODSwapChain::MAX_FRAMES_IN_FLIGHT); // 1 descriptor set per frame
         for(int i=0; i < globalDescriptorSets.size(); i++) {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
-            auto imageInfo = m_textureHandler->descriptorInfo();;
+            auto imageInfo = m_textureHandler->descriptorInfo();
+            auto computeBufferInfo0 = m_computeBuffers[0]->descriptorInfo();
+            auto computeBufferInfo1 = m_computeBuffers[1]->descriptorInfo();
 
             ODDescriptorWriter(*globalSetLayout, *m_globalDescriptorPool)
                 .writeBuffer(0, &bufferInfo)
                 .writeImage(1, &imageInfo)
-                .writeBuffer(2, &m_computeBuffers[0]->descriptorInfo())
-                .writeBuffer(3, &m_computeBuffers[1]->descriptorInfo())
+                .writeBuffer(2, &computeBufferInfo0)
+                .writeBuffer(3, &computeBufferInfo1)
                 .build(globalDescriptorSets[i]);
         }
 
         SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         PointLightSystem pointLightSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         // GridSystem gridSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
+        GPUParticleSystem gpuParticleSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
 
         auto m_cameraObject = ODGameObject::makeCameraObject();
         m_cameraObject.camera->setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));

@@ -41,7 +41,7 @@ namespace ODEngine {
         return buffer;
     }
 
-    ////////////////////////////////////////// ODBaseGraphicsPipeline //////////////////////////////////////////
+    ////////////////////////////////////////// ODBGraphicsPipeline //////////////////////////////////////////
 
     ODGraphicsPipeline::ODGraphicsPipeline(
         ODDevice &device, 
@@ -222,20 +222,26 @@ namespace ODEngine {
         configInfo.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;            
     }
 
-    ////////////////////////////////////////// ODBaseComputePipeline ///////////////////////////////////////////
+    ////////////////////////////////////////// ODComputePipeline ///////////////////////////////////////////
     
     
     ODComputePipeline::ODComputePipeline(
-        ODDevice &device, const std::string &computeShaderPath, const ODGraphicsPipelineConfigInfo &configInfo) 
-        : ODBasePipeline(m_device) {}
+        ODDevice &device, const std::string &computeShaderPath, const ODComputePipelineConfigInfo &configInfo) 
+        : ODBasePipeline(device) { createComputePipeline(computeShaderPath, configInfo); }
 
-    void ODComputePipeline::createComputePipeline(const std::string &computeShaderPath, const ODGraphicsPipelineConfigInfo &configInfo) {
+    ODComputePipeline::~ODComputePipeline(){
+        vkDestroyShaderModule(m_device.device(), m_computeShaderModule, nullptr);
+        vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
+    }
+
+    void ODComputePipeline::bind(VkCommandBuffer commandBuffer) {
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipeline);
+    }
+
+    void ODComputePipeline::createComputePipeline(const std::string &computeShaderPath, const ODComputePipelineConfigInfo &configInfo) {
         assert(
             configInfo.pipelineLayout != nullptr &&
             "Cannot create graphics pipeline: no pipelineLayout provided in config info");
-        assert(
-            configInfo.renderPass != nullptr &&
-            "Cannot create graphics pipeline: no renderPass provided in config info");
         
         auto computeShaderCode = readFile(computeShaderPath);
 

@@ -21,15 +21,17 @@ namespace ODEngine {
             GPUParticleSystem(const GPUParticleSystem&) = delete;
             GPUParticleSystem& operator=(const GPUParticleSystem&) = delete;
             
-            void render(FrameInfo& frameInfo);
+            void compute(FrameInfo& frameInfo, VkCommandBuffer commandBuffer,
+                std::vector<VkSemaphore> computeFinishedSemaphores, std::vector<VkFence> computeInFlightFences);
 
         private:
-            void createGraphicsPipelineLayout(VkDescriptorSetLayout globalSetLayout);
-            void createGraphicsPipeline(VkRenderPass renderPass);
+            void createComputePipelineLayout(VkDescriptorSetLayout globalSetLayout);
+            void createComputePipeline(VkRenderPass renderPass);
+            void recordComputeCommandBuffer(VkCommandBuffer commandBuffer, FrameInfo& frameInfo);
 
         private:
             ODDevice& m_device;
-            std::unique_ptr<ODGraphicsPipeline> m_pipeline;
+            std::unique_ptr<ODComputePipeline> m_odPipeline;
             VkPipelineLayout m_pipelineLayout = nullptr;
     };
 

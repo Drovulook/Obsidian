@@ -41,8 +41,12 @@ namespace ODEngine {
             void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
             void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
+            std::vector<VkSemaphore> getComputeFinishedSemaphores() { return m_swapChain->computeFinishedSemaphores(); }
+            std::vector<VkFence> getComputeInFlightFences() { return m_swapChain->computeInFlightFences(); }
+
         private:
             void createCommandBuffers();
+            void createComputeCommandBuffers();
             void freeCommandBuffers();
             void recreateSwapChain();
 
@@ -51,6 +55,7 @@ namespace ODEngine {
             ODDevice& m_device;
             std::unique_ptr<ODSwapChain> m_swapChain;
             std::vector<VkCommandBuffer> m_commandBuffers;
+            std::vector<VkCommandBuffer> m_computeCommandBuffers;
 
             uint32_t m_currentImageIndex;
             int m_currentFrameIndex{0};

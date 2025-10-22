@@ -1,4 +1,5 @@
 #include "ODRenderer.h"
+#include "Particle.h"
 
 // std
 #include <stdexcept>
@@ -93,6 +94,19 @@ namespace ODEngine {
         // Ne plus pré-enregistrer - sera fait dans drawFrame()
     }
 
+    void ODRenderer::createComputeCommandBuffers() {
+        m_computeCommandBuffers.resize(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = m_device.getCommandPool();
+        allocInfo.commandBufferCount = static_cast<uint32_t>(m_computeCommandBuffers.size());
+
+        if (vkAllocateCommandBuffers(m_device.device(), &allocInfo, m_computeCommandBuffers.data()) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate compute command buffers!");
+        }
+    }
+
     void ODRenderer::freeCommandBuffers(){
         vkFreeCommandBuffers(
             m_device.device(), 
@@ -123,7 +137,7 @@ namespace ODEngine {
         m_isFrameStarted = true;
 
         auto commandBuffer = getCurrentCommandBuffer();
-        // vkResetCommandBuffer(commandBuffer, 0); // !! à enlever ?
+        vkResetCommandBuffer(commandBuffer, 0); // !! à enlever ?
         
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

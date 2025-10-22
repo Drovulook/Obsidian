@@ -8,6 +8,22 @@
 #include <vulkan/vulkan.h> //pas obligatoire (voir ODWindow.h)
 
 namespace ODEngine {
+    
+    ////////////////////////////////////////////// ODBasePipeline //////////////////////////////////////////////
+    class ODBasePipeline {
+        public:
+        ODBasePipeline(ODDevice& device);
+        virtual ~ODBasePipeline() = default;
+        
+        protected:
+        void createShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule);
+        static std::vector<char> readFile(const std::string& filename);
+        
+        ODDevice& m_device;
+        VkPipeline m_pipeline;
+    };
+    
+    ////////////////////////////////////////// ODGraphicsPipeline //////////////////////////////////////////
     struct ODGraphicsPipelineConfigInfo {
         ODGraphicsPipelineConfigInfo() = default;
 
@@ -31,19 +47,6 @@ namespace ODEngine {
 
     };
 
-    class ODBasePipeline {
-        public:
-            ODBasePipeline(ODDevice& device);
-            virtual ~ODBasePipeline() = default;
-        
-        protected:
-            void createShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule);
-            static std::vector<char> readFile(const std::string& filename);
-            
-            ODDevice& m_device;
-            VkPipeline m_pipeline;
-    };
-
     class ODGraphicsPipeline : public ODBasePipeline {
         public:
             ODGraphicsPipeline(
@@ -52,8 +55,8 @@ namespace ODEngine {
                 const std::string& fragmentShaderPath,
                 const ODGraphicsPipelineConfigInfo& configInfo
             );
+            
             ODGraphicsPipeline() = default;
-
             ~ODGraphicsPipeline() override;
 
             ODGraphicsPipeline(const ODGraphicsPipeline&) = delete;
@@ -74,21 +77,39 @@ namespace ODEngine {
             VkShaderModule m_vertShaderModule;
             VkShaderModule m_fragShaderModule;
         };
-        
-        class ODComputePipeline : public ODBasePipeline {
-            public:
-            ODComputePipeline(
-                ODDevice& device, 
-                const std::string &computeShaderPath, 
-                const ODGraphicsPipelineConfigInfo& configInfo);
-                
-                ODComputePipeline() = default;
-                ~ODComputePipeline() override;
-                
-            private:
-                void createComputePipeline(const std::string &computeShaderPath, const ODGraphicsPipelineConfigInfo &configInfo);
-                
-                VkShaderModule m_computeShaderModule;
+    
+    ////////////////////////////////////////// ODComputePipeline ///////////////////////////////////////////
+    struct ODComputePipelineConfigInfo {
+        ODComputePipelineConfigInfo() = default;
+
+        ODComputePipelineConfigInfo(const ODComputePipelineConfigInfo&) = delete;
+        ODComputePipelineConfigInfo& operator=(const ODComputePipelineConfigInfo&) = delete;
+
+        VkPipelineLayout pipelineLayout = nullptr;
+
+    };
+
+    class ODComputePipeline : public ODBasePipeline {
+        public:
+        ODComputePipeline(
+            ODDevice& device, 
+            const std::string &computeShaderPath, 
+            const ODComputePipelineConfigInfo& configInfo);
+            
+            ODComputePipeline() = default;
+            ~ODComputePipeline() override;
+
+            ODComputePipeline(const ODGraphicsPipeline&) = delete;
+            ODComputePipeline& operator=(const ODGraphicsPipeline&) = delete;
+
+            // static void defaultPipelineConfigInfo(ODDevice& device, ODGraphicsPipelineConfigInfo& configInfo);
+
+            void bind(VkCommandBuffer commandBuffer);
+            
+        private:
+            void createComputePipeline(const std::string &computeShaderPath, const ODComputePipelineConfigInfo &configInfo);
+            
+            VkShaderModule m_computeShaderModule;
 
     };
 
