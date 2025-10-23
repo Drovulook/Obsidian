@@ -32,4 +32,15 @@ namespace ODEngine {
         VkDescriptorSet globalDescriptorSet;
         ODGameObject::Map& gameObjects;
     };
+    
+    struct ComputeShaderUbo {
+        float deltaTime;
+    };
+
+
+    struct ComputeShaderFrameInfo {
+        float deltaTime;
+        VkCommandBuffer commandBuffer;
+        VkDescriptorSet computeDescriptorSet;
+    };
 }

@@ -5,7 +5,7 @@
 #include "ODModel.h"
 #include "ODGameObject.h"
 #include "ODPipeline.h"
-#include "ODFrameInfo.h"
+#include "FrameInfo.h"
 #include "ODModel.h"
 
 // std

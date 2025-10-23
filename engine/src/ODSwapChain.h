@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ODDevice.h"
-#include "ODFrameInfo.h"
+#include "FrameInfo.h"
 
 // vulkan headers
 #include <vulkan/vulkan.h>

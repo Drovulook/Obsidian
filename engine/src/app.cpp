@@ -26,9 +26,10 @@ namespace ODEngine {
     App::App() {
         m_globalDescriptorPool = ODDescriptorPool::Builder(m_device)
             .setMaxSets(ODSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ODSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ODSwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, ODSwapChain::MAX_FRAMES_IN_FLIGHT * 2)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ODSwapChain::MAX_FRAMES_IN_FLIGHT) // contient les infos de la caméra et de l'éclairage
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, ODSwapChain::MAX_FRAMES_IN_FLIGHT) // texture
+            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, ODSwapChain::MAX_FRAMES_IN_FLIGHT * 2) // buffer compute.comp <-> compute.vert et .frag
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ODSwapChain::MAX_FRAMES_IN_FLIGHT) // info de pas de temps pour le compute shader
             .build();
     
         m_textureHandler = std::make_shared<ODTextureHandler>(m_device);
@@ -81,6 +82,17 @@ namespace ODEngine {
            );
        }
 
+       std::vector<std::unique_ptr<ODBuffer>> uboComputeBuffers(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
+       for(int i=0; i < uboComputeBuffers.size(); i++) {
+           uboComputeBuffers[i] = std::make_unique<ODBuffer>(
+               m_device,
+               sizeof(ComputeShaderUbo),
+               1,
+               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+           );
+           uboComputeBuffers[i]->map();
+       }
 
         std::vector<std::unique_ptr<ODBuffer>> uboBuffers(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i=0; i < uboBuffers.size(); i++) {
@@ -94,6 +106,7 @@ namespace ODEngine {
             uboBuffers[i]->map();
         }
 
+
         auto globalSetLayout = ODDescriptorSetLayout::Builder(m_device)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS | VK_SHADER_STAGE_COMPUTE_BIT)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -101,6 +114,8 @@ namespace ODEngine {
             // computer shader binding
             .addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
             .addBinding(3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
+
+            .addBinding(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT)
             
             .build();
 
@@ -110,19 +125,21 @@ namespace ODEngine {
             auto imageInfo = m_textureHandler->descriptorInfo();
             auto computeBufferInfo0 = m_computeBuffers[0]->descriptorInfo();
             auto computeBufferInfo1 = m_computeBuffers[1]->descriptorInfo();
+            auto coomputeBufferTime = uboComputeBuffers[i]->descriptorInfo();
 
             ODDescriptorWriter(*globalSetLayout, *m_globalDescriptorPool)
                 .writeBuffer(0, &bufferInfo)
                 .writeImage(1, &imageInfo)
                 .writeBuffer(2, &computeBufferInfo0)
                 .writeBuffer(3, &computeBufferInfo1)
+                .writeBuffer(4, &coomputeBufferTime)
                 .build(globalDescriptorSets[i]);
         }
 
         SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         PointLightSystem pointLightSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         // GridSystem gridSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
-        GPUParticleSystem gpuParticleSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
+        // GPUParticleSystem gpuParticleSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
 
         auto m_cameraObject = ODGameObject::makeCameraObject();
         m_cameraObject.camera->setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
@@ -171,6 +188,22 @@ namespace ODEngine {
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
+                // compute
+                ComputeShaderFrameInfo computeFrameInfo{
+                    deltaTime,
+                    commandBuffer,
+                    globalDescriptorSets[frameIndex]
+                };
+
+                uboComputeBuffers[frameIndex]->writeToBuffer(&deltaTime);
+                uboComputeBuffers[frameIndex]->flush();
+
+                // compute
+                // gpuParticleSystem.compute(frameInfo, m_renderer.getCurrentCommandBuffer(),
+                //     m_renderer.getComputeFinishedSemaphores(),
+                //     m_renderer.getComputeInFlightFences()
+                // );
+
                 // render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
                 
@@ -178,6 +211,7 @@ namespace ODEngine {
                 simpleRendererSystem.renderGameObjects(frameInfo);
                 // gridSystem.render(frameInfo);
                 pointLightSystem.render(frameInfo);
+                // gpuParticleSystem.render(frameInfo);
             
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();

@@ -43,6 +43,7 @@ namespace ODEngine {
 
             std::vector<VkSemaphore> getComputeFinishedSemaphores() { return m_swapChain->computeFinishedSemaphores(); }
             std::vector<VkFence> getComputeInFlightFences() { return m_swapChain->computeInFlightFences(); }
+            std::vector<VkCommandBuffer> getComputeCommandBuffers() { return m_computeCommandBuffers; }
 
         private:
             void createCommandBuffers();

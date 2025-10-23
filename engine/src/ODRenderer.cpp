@@ -115,6 +115,14 @@ namespace ODEngine {
             m_commandBuffers.data()
         );
         m_commandBuffers.clear();
+
+        vkFreeCommandBuffers(
+            m_device.device(), 
+            m_device.getCommandPool(), 
+            static_cast<uint32_t>(m_computeCommandBuffers.size()), 
+            m_computeCommandBuffers.data()
+        );
+        m_computeCommandBuffers.clear();
     }
 
     VkCommandBuffer ODRenderer::beginFrame(){
@@ -137,7 +145,7 @@ namespace ODEngine {
         m_isFrameStarted = true;
 
         auto commandBuffer = getCurrentCommandBuffer();
-        vkResetCommandBuffer(commandBuffer, 0); // !! à enlever ?
+        // vkResetCommandBuffer(commandBuffer, 0); // !! à enlever ?
         
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
