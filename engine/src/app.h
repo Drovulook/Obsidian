@@ -33,6 +33,7 @@ namespace ODEngine {
 
         private:
             virtual void loadGameObjects() = 0;
+            void debugBuffer(ODDevice& device, VkBuffer srcBuffer, size_t size);
 
         private:
             ODWindow m_window{WIDTH, HEIGHT, "Obsidian Engine"};

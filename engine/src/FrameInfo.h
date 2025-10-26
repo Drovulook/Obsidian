@@ -31,6 +31,7 @@ namespace ODEngine {
         ODCamera& camera;
         VkDescriptorSet globalDescriptorSet;
         ODGameObject::Map& gameObjects;
+        VkBuffer particleBuffer;
     };
     
     struct ComputeShaderUbo {

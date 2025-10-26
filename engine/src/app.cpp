@@ -48,12 +48,12 @@ namespace ODEngine {
         m_computeBuffers.resize(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
         std::vector<ODParticles::Particle> particles(ODParticles::PARTICLE_COUNT);
         for (auto& particle : particles) {
-            float r = 0.25f * sqrt(rndDist(rndEngine));
+            float r = 1.0f * sqrt(rndDist(rndEngine));
             float theta = rndDist(rndEngine) * 2 * 3.14159265358979323846;
             float x = r * cos(theta) * HEIGHT / WIDTH;
             float y = r * sin(theta);
             particle.position = glm::vec2(x, y);
-            particle.velocity = glm::normalize(glm::vec2(x,y)) * 0.00025f;
+            particle.velocity = glm::normalize(glm::vec2(x,y)) * 0.1f;
             particle.color = glm::vec4(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine), 1.0f);
         }
 
@@ -72,7 +72,7 @@ namespace ODEngine {
                m_device,
                sizeof(ODParticles::Particle),
                ODParticles::PARTICLE_COUNT,
-               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
            );
         m_device.copyBuffer(
@@ -123,8 +123,8 @@ namespace ODEngine {
         for(int i=0; i < globalDescriptorSets.size(); i++) {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
             auto imageInfo = m_textureHandler->descriptorInfo();
-            auto computeBufferInfo0 = m_computeBuffers[0]->descriptorInfo();
-            auto computeBufferInfo1 = m_computeBuffers[1]->descriptorInfo();
+            auto computeBufferInfo0 = m_computeBuffers[i]->descriptorInfo();
+            auto computeBufferInfo1 = m_computeBuffers[(i + 1) % 2]->descriptorInfo();
             auto coomputeBufferTime = uboComputeBuffers[i]->descriptorInfo();
 
             ODDescriptorWriter(*globalSetLayout, *m_globalDescriptorPool)
@@ -139,7 +139,7 @@ namespace ODEngine {
         SimpleRendererSystem simpleRendererSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         PointLightSystem pointLightSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         // GridSystem gridSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
-        // GPUParticleSystem gpuParticleSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
+        GPUParticleSystem gpuParticleSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
 
         auto m_cameraObject = ODGameObject::makeCameraObject();
         m_cameraObject.camera->setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
@@ -167,60 +167,92 @@ namespace ODEngine {
             float aspect = m_renderer.getAspectRatio();
             m_cameraObject.camera->updatePerspectiveProjection(aspect);
 
+            auto commandBuffer = m_renderer.getCurrentCommandBuffer();  
+            int frameIndex = m_renderer.getCurrentFrameIndex();
+            
+            FrameInfo frameInfo{
+                frameIndex,
+                deltaTime,
+                commandBuffer,
+                *m_cameraObject.camera,
+                globalDescriptorSets[frameIndex],
+                m_gameObjects,
+                m_computeBuffers[(frameIndex + 1) % 2]->getBuffer()
+            };
+
+            // update
+            GlobalUbo ubo{};
+            ubo.projection = m_cameraObject.camera->getProjection();
+            ubo.view = m_cameraObject.camera->getView();
+            ubo.inverseView = m_cameraObject.camera->getInverseView();
+            pointLightSystem.update(frameInfo, ubo);
+            uboBuffers[frameIndex]->writeToBuffer(&ubo);
+            uboBuffers[frameIndex]->flush();
+
+            // compute
+            ComputeShaderFrameInfo computeFrameInfo{
+                deltaTime,
+                commandBuffer,
+                globalDescriptorSets[frameIndex]
+            };
+            
+            uboComputeBuffers[frameIndex]->writeToBuffer(&deltaTime);
+            uboComputeBuffers[frameIndex]->flush();
+            
+            // compute
+            gpuParticleSystem.compute(frameInfo, m_renderer.getCurrentComputeCommandBuffers(),
+            m_renderer.getComputeFinishedSemaphores(),
+            m_renderer.getComputeInFlightFences()
+            );
+            
             if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
-                int frameIndex = m_renderer.getCurrentFrameIndex();
-                
-                FrameInfo frameInfo{
-                    frameIndex,
-                    deltaTime,
-                    commandBuffer,
-                    *m_cameraObject.camera,
-                    globalDescriptorSets[frameIndex],
-                    m_gameObjects
-                };
-
-                // update
-                GlobalUbo ubo{};
-                ubo.projection = m_cameraObject.camera->getProjection();
-                ubo.view = m_cameraObject.camera->getView();
-                ubo.inverseView = m_cameraObject.camera->getInverseView();
-                pointLightSystem.update(frameInfo, ubo);
-                uboBuffers[frameIndex]->writeToBuffer(&ubo);
-                uboBuffers[frameIndex]->flush();
-
-                // compute
-                ComputeShaderFrameInfo computeFrameInfo{
-                    deltaTime,
-                    commandBuffer,
-                    globalDescriptorSets[frameIndex]
-                };
-
-                uboComputeBuffers[frameIndex]->writeToBuffer(&deltaTime);
-                uboComputeBuffers[frameIndex]->flush();
-
-                // compute
-                // gpuParticleSystem.compute(frameInfo, m_renderer.getCurrentCommandBuffer(),
-                //     m_renderer.getComputeFinishedSemaphores(),
-                //     m_renderer.getComputeInFlightFences()
-                // );
 
                 // render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
                 
                 // order matters for alpha blending
+                gpuParticleSystem.render(frameInfo);
                 simpleRendererSystem.renderGameObjects(frameInfo);
                 // gridSystem.render(frameInfo);
                 pointLightSystem.render(frameInfo);
-                // gpuParticleSystem.render(frameInfo);
             
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }
+        vkDeviceWaitIdle(m_device.device());
+
+        // size_t bufferSize = sizeof(ODParticles::Particle) * ODParticles::PARTICLE_COUNT;
+        // std::cout << "Contents of m_computeBuffers[0]:" << std::endl;
+        // debugBuffer(m_device, m_computeBuffers[0]->getBuffer(), bufferSize);
+        // std::cout << "Contents of m_computeBuffers[1]:" << std::endl;
+        // debugBuffer(m_device, m_computeBuffers[1]->getBuffer(), bufferSize);
         }
         vkDeviceWaitIdle(m_device.device());
     }
 
     std::shared_ptr<ODModel> App::createModelFromFile(const std::string &modelPath){
         return ODModel::createModelFromFile(m_device, modelPath);
+    }
+    void App::debugBuffer(ODDevice &device, VkBuffer srcBuffer, size_t size) {
+        ODBuffer stagingBuffer{
+        device,
+        sizeof(ODParticles::Particle),  // Taille par élément
+        ODParticles::PARTICLE_COUNT,    // Nombre d'éléments
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    };
+    stagingBuffer.map();
+
+    // Copier du buffer device vers staging
+    device.copyBuffer(srcBuffer, stagingBuffer.getBuffer(), size);
+
+    // Lire et afficher
+    ODParticles::Particle* data = reinterpret_cast<ODParticles::Particle*>(stagingBuffer.getMappedMemory());
+    for (size_t i = 0; i < std::min(size_t(10), size_t(ODParticles::PARTICLE_COUNT)); ++i) { // Affiche les 10 premières
+        std::cout << "Particle " << i << ": Pos(" << data[i].position.x << ", " << data[i].position.y 
+                  << "), Vel(" << data[i].velocity.x << ", " << data[i].velocity.y 
+                  << "), Color(" << data[i].color.r << ", " << data[i].color.g << ", " << data[i].color.b << ")" << std::endl;
+    }
+    stagingBuffer.unmap();  // Optionnel, mais bon
     }
 }

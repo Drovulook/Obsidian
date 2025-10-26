@@ -81,6 +81,10 @@ namespace ODEngine {
         
         ODGraphicsPipelineConfigInfo pipelineConfig{};
         ODGraphicsPipeline::defaultPipelineConfigInfo(m_device, pipelineConfig);
+        pipelineConfig.attributeDescriptions = ODParticles::Particle::getAttributeDescriptions();
+        pipelineConfig.bindingDescriptions = ODParticles::Particle::getBindingDescriptions();
+        ODGraphicsPipeline::enableAlphaBlending(pipelineConfig);
+        pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_graphicsPipelineLayout;
         
@@ -105,17 +109,20 @@ namespace ODEngine {
                 nullptr
             );
 
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &frameInfo.particleBuffer, offsets);
+
             vkCmdDraw(frameInfo.commandBuffer, ODParticles::PARTICLE_COUNT, 1, 0, 0);
         }
         
-        void GPUParticleSystem::compute(FrameInfo& frameInfo, VkCommandBuffer commandBuffer,
-         std::vector<VkSemaphore> computeFinishedSemaphores, std::vector<VkFence> computeInFlightFences) {
+    void GPUParticleSystem::compute(FrameInfo& frameInfo, VkCommandBuffer commandBuffer,
+        std::vector<VkSemaphore> computeFinishedSemaphores, std::vector<VkFence> computeInFlightFences) {
              
-             int currentFrame = frameInfo.frameIndex;
+        int currentFrame = frameInfo.frameIndex;
              
-             vkWaitForFences(m_device.device(), 1, &computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(m_device.device(), 1, &computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
              
-             vkResetFences(m_device.device(), 1, &computeInFlightFences[currentFrame]);
+        vkResetFences(m_device.device(), 1, &computeInFlightFences[currentFrame]);
              
         vkResetCommandBuffer(commandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
         

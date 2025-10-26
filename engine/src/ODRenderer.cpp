@@ -47,6 +47,7 @@ namespace ODEngine {
         : m_window(window), m_device(device) {
         recreateSwapChain();
         createCommandBuffers(); // Déjà alloué dans recreateSwapChain()
+        createComputeCommandBuffers();
     }
 
     ODRenderer::~ODRenderer(){

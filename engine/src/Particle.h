@@ -8,30 +8,23 @@
 
 namespace ODEngine {
     namespace ODParticles {
-        const uint32_t PARTICLE_COUNT = 8192;
+        const uint32_t PARTICLE_COUNT = 8192 * 256;
 
         struct Particle {
-            static VkVertexInputBindingDescription getBindingDescription() {
-                VkVertexInputBindingDescription bindingDescription{};
-                bindingDescription.binding = 0;
-                bindingDescription.stride = sizeof(Particle);
-                bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+            static std::vector<VkVertexInputBindingDescription> getBindingDescriptions() {
+                std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
+                bindingDescriptions[0].binding = 0;
+                bindingDescriptions[0].stride = sizeof(Particle);
+                bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-                return bindingDescription;
+                return bindingDescriptions;
             }
 
-            static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-            std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
-
-            attributeDescriptions[0].binding = 0;
-            attributeDescriptions[0].location = 0;
-            attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-            attributeDescriptions[0].offset = offsetof(Particle, position);
-
-            attributeDescriptions[1].binding = 0;
-            attributeDescriptions[1].location = 1;
-            attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-            attributeDescriptions[1].offset = offsetof(Particle, color);
+            static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() {
+            std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
+            attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Particle, position)});
+            // !! switcher 1 <-> 0 ?
+            attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Particle, color)});
 
             return attributeDescriptions;
         }

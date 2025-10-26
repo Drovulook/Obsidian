@@ -23,7 +23,6 @@ namespace ODEngine {
             bool isFrameInProgress() const { return m_isFrameStarted; }
             
             VkCommandBuffer getCurrentCommandBuffer() const {
-                assert (m_isFrameStarted && "Cannot get command buffer when frame is not in progress!");
                 return m_commandBuffers[m_currentFrameIndex];
             }
             VkRenderPass getSwapChainRenderPass() const {
@@ -33,7 +32,6 @@ namespace ODEngine {
             float getAspectRatio() const { return m_swapChain->extentAspectRatio(); }
 
             int getCurrentFrameIndex() const { 
-                assert(m_isFrameStarted && "Cannot get current frame index when frame is not in progress!");
                 return m_currentFrameIndex; }
 
             VkCommandBuffer beginFrame();
@@ -43,7 +41,8 @@ namespace ODEngine {
 
             std::vector<VkSemaphore> getComputeFinishedSemaphores() { return m_swapChain->computeFinishedSemaphores(); }
             std::vector<VkFence> getComputeInFlightFences() { return m_swapChain->computeInFlightFences(); }
-            std::vector<VkCommandBuffer> getComputeCommandBuffers() { return m_computeCommandBuffers; }
+            VkCommandBuffer getCurrentComputeCommandBuffers() { 
+                return m_computeCommandBuffers[m_currentFrameIndex]; }
 
         private:
             void createCommandBuffers();
