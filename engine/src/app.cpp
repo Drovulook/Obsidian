@@ -41,47 +41,6 @@ namespace ODEngine {
 
     void App::run() {
 
-        // compute shaders
-        std::default_random_engine rndEngine((unsigned)time(nullptr));
-        std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
-
-        m_computeBuffers.resize(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
-        std::vector<ODParticles::Particle> particles(ODParticles::PARTICLE_COUNT);
-        for (auto& particle : particles) {
-            float r = 1.0f * sqrt(rndDist(rndEngine));
-            float theta = rndDist(rndEngine) * 2 * 3.14159265358979323846;
-            float x = r * cos(theta) * HEIGHT / WIDTH;
-            float y = r * sin(theta);
-            particle.position = glm::vec2(x, y);
-            particle.velocity = glm::normalize(glm::vec2(x,y)) * 0.1f;
-            particle.color = glm::vec4(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine), 1.0f);
-        }
-
-        ODBuffer computeStagingBuffer = ODBuffer {
-                m_device,
-                sizeof(ODParticles::Particle),
-                ODParticles::PARTICLE_COUNT,
-                VK_BUFFER_USAGE_TRANSFER_SRC_BIT, // vérifier
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-        };
-        computeStagingBuffer.map();
-       computeStagingBuffer.writeToBuffer((void*)particles.data());
-
-       for (size_t i = 0; i < ODSwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-        m_computeBuffers[i] = std::make_unique<ODBuffer>( // liste de listes (2*2) plutôt ?
-               m_device,
-               sizeof(ODParticles::Particle),
-               ODParticles::PARTICLE_COUNT,
-               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-           );
-        m_device.copyBuffer(
-               computeStagingBuffer.getBuffer(),
-               m_computeBuffers[i]->getBuffer(),
-               sizeof(ODParticles::Particle) * ODParticles::PARTICLE_COUNT
-           );
-       }
-
        std::vector<std::unique_ptr<ODBuffer>> uboComputeBuffers(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
        for(int i=0; i < uboComputeBuffers.size(); i++) {
            uboComputeBuffers[i] = std::make_unique<ODBuffer>(
@@ -123,8 +82,8 @@ namespace ODEngine {
         for(int i=0; i < globalDescriptorSets.size(); i++) {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
             auto imageInfo = m_textureHandler->descriptorInfo();
-            auto computeBufferInfo0 = m_computeBuffers[i]->descriptorInfo();
-            auto computeBufferInfo1 = m_computeBuffers[(i + 1) % 2]->descriptorInfo();
+            auto computeBufferInfo0 = m_particleSystem.getParticleBuffers()[i]->descriptorInfo();
+            auto computeBufferInfo1 = m_particleSystem.getParticleBuffers()[(i + 1) % 2]->descriptorInfo();
             auto coomputeBufferTime = uboComputeBuffers[i]->descriptorInfo();
 
             ODDescriptorWriter(*globalSetLayout, *m_globalDescriptorPool)
@@ -177,7 +136,7 @@ namespace ODEngine {
                 *m_cameraObject.camera,
                 globalDescriptorSets[frameIndex],
                 m_gameObjects,
-                m_computeBuffers[(frameIndex + 1) % 2]->getBuffer()
+                m_particleSystem.getParticleBuffers()[(frameIndex + 1) % 2]->getBuffer()
             };
 
             // update

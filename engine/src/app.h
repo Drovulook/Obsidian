@@ -7,6 +7,7 @@
 #include "ODRenderer.h"
 #include "ODDescriptors.h"
 #include "ODTextureHandler.h"
+#include "Particle.h"
 
 // std
 #include <memory>
@@ -39,11 +40,9 @@ namespace ODEngine {
             ODWindow m_window{WIDTH, HEIGHT, "Obsidian Engine"};
             ODDevice m_device{m_window};
             ODRenderer m_renderer{m_window, m_device};
+            ODParticles::ParticleSystem m_particleSystem{m_device, WIDTH, HEIGHT};
             std::unique_ptr<ODDescriptorPool> m_globalDescriptorPool{};
-
             std::shared_ptr<ODGameObject> m_cameraObject = nullptr;
-
-            std::vector<std::unique_ptr<ODBuffer>> m_computeBuffers;
 
         protected:
             ODGameObject::Map m_gameObjects;
