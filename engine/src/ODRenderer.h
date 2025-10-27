@@ -25,9 +25,12 @@ namespace ODEngine {
             VkCommandBuffer getCurrentCommandBuffer() const {
                 return m_commandBuffers[m_currentFrameIndex];
             }
+
             VkRenderPass getSwapChainRenderPass() const {
                 return m_swapChain->getRenderPass();
             }
+
+            ODSwapChain &getSwapChain() { return *m_swapChain; }
 
             float getAspectRatio() const { return m_swapChain->extentAspectRatio(); }
 

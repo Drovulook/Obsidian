@@ -94,6 +94,7 @@ target_include_directories(ObsidianEngine PUBLIC
     engine/libraries/glm-1.0.1
     engine/libraries/tinyobjloader
     engine/libraries/stbimage
+    engine/libraries/nuklear
     engine/src                # Engine source directory
 )
 
@@ -138,6 +139,13 @@ add_custom_target(compile_shaders
     COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/engine/shaders compile.bat
     COMMENT "Compiling shaders..."
     VERBATIM
+)
+
+add_custom_command(TARGET compile_shaders POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/engine/shaders/compiled/nuklear
+    COMMAND C:/dev/VulkanSDK/1.4.313.2/Bin/glslc.exe ${CMAKE_SOURCE_DIR}/engine/libraries/nuklear/shaders/demo.vert -o ${CMAKE_SOURCE_DIR}/engine/shaders/compiled/nuklear/demo.vert.spv
+    COMMAND C:/dev/VulkanSDK/1.4.313.2/Bin/glslc.exe ${CMAKE_SOURCE_DIR}/engine/libraries/nuklear/shaders/demo.frag -o ${CMAKE_SOURCE_DIR}/engine/shaders/compiled/nuklear/demo.frag.spv
+    COMMENT "Compiling Nuklear shaders..."
 )
 
 # Make shader compilation a dependency of the engine library

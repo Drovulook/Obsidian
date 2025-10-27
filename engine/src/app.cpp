@@ -41,6 +41,17 @@ namespace ODEngine {
 
     void App::run() {
 
+        m_uiManager.init(
+            m_window.getGLFWWindow(),
+            m_device.device(),
+            m_device.physicalDevice(),
+            m_device.findPhysicalQueueFamilies().graphicsAndComputeFamily,
+            m_renderer.getSwapChain().getImagesView().data(),
+            static_cast<uint32_t>(m_renderer.getSwapChain().getImagesView().size()),
+            m_renderer.getSwapChain().getSwapChainImageFormat(),
+            m_device.graphicsQueue()
+        );
+
        std::vector<std::unique_ptr<ODBuffer>> uboComputeBuffers(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
        for(int i=0; i < uboComputeBuffers.size(); i++) {
            uboComputeBuffers[i] = std::make_unique<ODBuffer>(
@@ -163,6 +174,9 @@ namespace ODEngine {
             m_renderer.getComputeFinishedSemaphores(),
             m_renderer.getComputeInFlightFences()
             );
+
+            m_uiManager.newFrame();
+            m_uiManager.render();
             
             if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
 
@@ -174,6 +188,9 @@ namespace ODEngine {
                 simpleRendererSystem.renderGameObjects(frameInfo);
                 // gridSystem.render(frameInfo);
                 pointLightSystem.render(frameInfo);
+
+                uint32_t currentImageIndex = frameIndex; // ou utilisez l'index d'image approprié
+                m_uiManager.renderUI(m_device.graphicsQueue(), currentImageIndex);
             
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();

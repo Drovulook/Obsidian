@@ -8,6 +8,7 @@
                 "${workspaceFolder}/engine/libraries/glfw-3.4/include",
                 "${workspaceFolder}/engine/libraries/glm-1.0.1",
                 "${workspaceFolder}/engine/libraries/tinyobjloader",
+                "${workspaceFolder}/engine/libraries/nuklear",
                 "C:/dev/VulkanSDK/1.4.313.2/Include"
             ],
             "defines": [

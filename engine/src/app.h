@@ -8,6 +8,7 @@
 #include "ODDescriptors.h"
 #include "ODTextureHandler.h"
 #include "Particle.h"
+#include "UIManager.h"
 
 // std
 #include <memory>
@@ -43,6 +44,8 @@ namespace ODEngine {
             ODParticles::ParticleSystem m_particleSystem{m_device, WIDTH, HEIGHT};
             std::unique_ptr<ODDescriptorPool> m_globalDescriptorPool{};
             std::shared_ptr<ODGameObject> m_cameraObject = nullptr;
+
+            UIManager m_uiManager;
 
         protected:
             ODGameObject::Map m_gameObjects;
