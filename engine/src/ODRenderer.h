@@ -36,6 +36,12 @@ namespace ODEngine {
 
             int getCurrentFrameIndex() const { 
                 return m_currentFrameIndex; }
+            VkSemaphore endFrameWithoutPresent(); // Retourne le sémaphore de rendu fini
+            void presentFrame(VkSemaphore waitSemaphore); // Présente en attendant le sémaphore
+            uint32_t getCurrentImageIndex() const { return m_currentImageIndex; }
+            VkSemaphore getRenderFinishedSemaphore() const { 
+                return m_swapChain->getRenderFinishedSemaphore(m_currentImageIndex); 
+            }
 
             VkCommandBuffer beginFrame();
             void endFrame();

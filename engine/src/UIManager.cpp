@@ -84,8 +84,8 @@ namespace ODEngine {
             nk_glfw3_new_frame();
         }
    }
-   VkSemaphore UIManager::renderUI(VkQueue graphicsQueue, uint32_t imageIndex) {
+   VkSemaphore UIManager::renderUI(VkQueue graphicsQueue, uint32_t imageIndex, VkSemaphore waitSemaphore) {
        if (!m_initialized) return VK_NULL_HANDLE;
-        return nk_glfw3_render(graphicsQueue, imageIndex, VK_NULL_HANDLE, NK_ANTI_ALIASING_ON);
+        return nk_glfw3_render(graphicsQueue, imageIndex, waitSemaphore, NK_ANTI_ALIASING_ON);
    }
 } // namespace ODEngine

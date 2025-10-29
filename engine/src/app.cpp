@@ -189,13 +189,24 @@ namespace ODEngine {
                 // gridSystem.render(frameInfo);
                 pointLightSystem.render(frameInfo);
 
-                uint32_t currentImageIndex = frameIndex; // ou utilisez l'index d'image approprié
-                m_uiManager.renderUI(m_device.graphicsQueue(), currentImageIndex);
-            
                 m_renderer.endSwapChainRenderPass(commandBuffer);
-                m_renderer.endFrame();
+                
+                VkSemaphore renderFinishedSemaphore = m_renderer.endFrameWithoutPresent();
+    
+                if (renderFinishedSemaphore != VK_NULL_HANDLE) {
+                    uint32_t currentImageIndex = m_renderer.getCurrentImageIndex();
+                    
+                    // UI attend que le rendu graphics soit terminé
+                    VkSemaphore uiSemaphore = m_uiManager.renderUI(
+                        m_device.graphicsQueue(), 
+                        currentImageIndex, 
+                        renderFinishedSemaphore
+                    );
+                    
+                    // Présenter en attendant que l'UI soit terminée
+                    m_renderer.presentFrame(uiSemaphore);
+                }
             }
-        vkDeviceWaitIdle(m_device.device());
 
         // size_t bufferSize = sizeof(ODParticles::Particle) * ODParticles::PARTICLE_COUNT;
         // std::cout << "Contents of m_computeBuffers[0]:" << std::endl;

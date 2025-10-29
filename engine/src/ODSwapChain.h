@@ -36,6 +36,10 @@ class ODSwapChain {
   uint32_t height() { return swapChainExtent.height; }
   std::vector<VkSemaphore> computeFinishedSemaphores() { return computeFinishedSemaphores_; }
   std::vector<VkFence> computeInFlightFences() { return computeInFlightFences_; }
+  
+  VkResult submitCommandBuffersWithoutPresent(const VkCommandBuffer *buffers, uint32_t *imageIndex);
+  void presentFrameWithSemaphore(uint32_t *imageIndex, VkSemaphore waitSemaphore);
+  VkSemaphore getRenderFinishedSemaphore(uint32_t imageIndex) { return renderFinishedSemaphores[imageIndex]; }
 
   float extentAspectRatio() {
     return static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height);

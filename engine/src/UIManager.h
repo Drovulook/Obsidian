@@ -17,7 +17,7 @@ namespace ODEngine {
         void render();
         void handleInput();
         void newFrame();
-        VkSemaphore renderUI(VkQueue graphicsQueue, uint32_t imageIndex);
+        VkSemaphore renderUI(VkQueue graphicsQueue, uint32_t imageIndex, VkSemaphore waitSemaphore);
 
     private:
         nk_context *m_context;
