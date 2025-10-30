@@ -16,3 +16,12 @@ The Vulkan spec states: All elements of the pWaitSemaphores member of all elemen
 - Pourquoi anti-aliasing limité à VK_SAMPLE_COUNT_8_BIT ?
 
 - problème touches zqsd
+
+- dans nuklear: trouver une solution plus clean que (nuklear_glfw_vulkan, lignes 527 et 528):
+
+    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                    |
+                    v
+    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;      // ← Au lieu de CLEAR
+    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;   // ← Garder STORE

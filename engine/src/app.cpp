@@ -190,9 +190,6 @@ namespace ODEngine {
             m_renderer.getComputeFinishedSemaphores(),
             m_renderer.getComputeInFlightFences()
             );
-
-            m_uiManager.newFrame();
-            m_uiManager.render();
             
             if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
 
@@ -208,15 +205,18 @@ namespace ODEngine {
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 
                 VkSemaphore renderFinishedSemaphore = m_renderer.endFrameWithoutPresent();
-    
                 uint32_t currentImageIndex = m_renderer.getCurrentImageIndex();
                 
+                m_uiManager.newFrame();
+                m_uiManager.render();
+
                 // UI attend que le rendu graphics soit terminé
                 VkSemaphore uiSemaphore = m_uiManager.renderUI(
                     m_device.graphicsQueue(), 
-                    currentImageIndex, 
+                    currentImageIndex,
                     renderFinishedSemaphore
                 );
+
                 if (renderFinishedSemaphore != VK_NULL_HANDLE) {
 
                     vkWaitForFences(m_device.device(), 1, &m_transitionFences[currentImageIndex], VK_TRUE, UINT64_MAX);
@@ -326,8 +326,7 @@ namespace ODEngine {
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount = 1;
 
-        VkPipelineStageFlags sourceStage;
-        VkPipelineStageFlags destinationStage;
+        VkPipelineStageFlags sourceStage, destinationStage;
 
         if (oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && 
             newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
