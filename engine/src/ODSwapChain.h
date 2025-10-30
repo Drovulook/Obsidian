@@ -30,6 +30,7 @@ class ODSwapChain {
   VkImageView getImageView(int index) { return swapChainImageViews[index]; }
   std::vector<VkImageView> getImagesView() { return swapChainImageViews; }
   size_t imageCount() { return swapChainImages.size(); }
+  std::vector<VkImage> getImages() { return swapChainImages; }
   VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
   VkExtent2D getSwapChainExtent() { return swapChainExtent; }
   uint32_t width() { return swapChainExtent.width; }

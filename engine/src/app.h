@@ -35,6 +35,9 @@ namespace ODEngine {
 
         private:
             virtual void loadGameObjects() = 0;
+            void createTransitionResources();
+            void transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, 
+                          VkImageLayout oldLayout, VkImageLayout newLayout); 
             void debugBuffer(ODDevice& device, VkBuffer srcBuffer, size_t size);
 
         private:
@@ -46,6 +49,10 @@ namespace ODEngine {
             std::shared_ptr<ODGameObject> m_cameraObject = nullptr;
 
             UIManager m_uiManager;
+
+            std::vector<VkSemaphore> m_transitionSemaphores;
+            std::vector<VkCommandBuffer> m_transitionCommandBuffers;
+            std::vector<VkFence> m_transitionFences;
 
         protected:
             ODGameObject::Map m_gameObjects;

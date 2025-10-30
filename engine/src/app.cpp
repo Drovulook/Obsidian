@@ -33,10 +33,26 @@ namespace ODEngine {
             .build();
     
         m_textureHandler = std::make_shared<ODTextureHandler>(m_device);
+
+        createTransitionResources();
     }
 
     App::~App(){
+        vkDeviceWaitIdle(m_device.device());
 
+        for (auto semaphore : m_transitionSemaphores) {
+            vkDestroySemaphore(m_device.device(), semaphore, nullptr);
+        }
+
+        for (auto fence : m_transitionFences) {
+            vkDestroyFence(m_device.device(), fence, nullptr);
+        }
+    
+        if (!m_transitionCommandBuffers.empty()) {
+            vkFreeCommandBuffers(m_device.device(), m_device.getCommandPool(), 
+                                static_cast<uint32_t>(m_transitionCommandBuffers.size()), 
+                                m_transitionCommandBuffers.data());
+        }
     }
 
     void App::run() {
@@ -193,18 +209,58 @@ namespace ODEngine {
                 
                 VkSemaphore renderFinishedSemaphore = m_renderer.endFrameWithoutPresent();
     
+                uint32_t currentImageIndex = m_renderer.getCurrentImageIndex();
+                
+                // UI attend que le rendu graphics soit terminé
+                VkSemaphore uiSemaphore = m_uiManager.renderUI(
+                    m_device.graphicsQueue(), 
+                    currentImageIndex, 
+                    renderFinishedSemaphore
+                );
                 if (renderFinishedSemaphore != VK_NULL_HANDLE) {
-                    uint32_t currentImageIndex = m_renderer.getCurrentImageIndex();
+
+                    vkWaitForFences(m_device.device(), 1, &m_transitionFences[currentImageIndex], VK_TRUE, UINT64_MAX);
+                    vkResetFences(m_device.device(), 1, &m_transitionFences[currentImageIndex]);
                     
-                    // UI attend que le rendu graphics soit terminé
-                    VkSemaphore uiSemaphore = m_uiManager.renderUI(
-                        m_device.graphicsQueue(), 
-                        currentImageIndex, 
-                        renderFinishedSemaphore
-                    );
+                    VkCommandBuffer transitionCmd = m_transitionCommandBuffers[currentImageIndex];
+                    vkResetCommandBuffer(transitionCmd, 0);
+    
+                    VkCommandBufferBeginInfo beginInfo{};
+                    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+                    vkBeginCommandBuffer(transitionCmd, &beginInfo);
                     
+                    // Transition de layout pour la présentation
+                    VkImage swapChainImage = m_renderer.getSwapChain().getImages()[currentImageIndex];
+                    transitionImageLayout(transitionCmd, swapChainImage, 
+                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+                                        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+                    
+                    vkEndCommandBuffer(transitionCmd);
+                    
+                    // Soumettre la transition
+                    VkSubmitInfo submitInfo{};
+                    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                    submitInfo.waitSemaphoreCount = 1;
+                    submitInfo.pWaitSemaphores = &uiSemaphore;
+                    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                    submitInfo.pWaitDstStageMask = &waitStage;
+                    submitInfo.commandBufferCount = 1;
+                    submitInfo.pCommandBuffers = &transitionCmd;
+                    
+                    // Créer un nouveau sémaphore pour signaler la fin de la transition
+                    VkSemaphore transitionSemaphore = m_transitionSemaphores[currentImageIndex];
+                    submitInfo.signalSemaphoreCount = 1;
+                    submitInfo.pSignalSemaphores = &transitionSemaphore;
+                    
+                    vkQueueSubmit(m_device.graphicsQueue(), 1, &submitInfo, m_transitionFences[currentImageIndex]);
+
                     // Présenter en attendant que l'UI soit terminée
-                    m_renderer.presentFrame(uiSemaphore);
+                    m_renderer.presentFrame(transitionSemaphore);
+                } else {
+                    // Fallback si l'UI ne retourne pas de sémaphore
+                    std::cout << "Warning: UI Manager did not return a semaphore, presenting directly after rendering." << std::endl;
+                    m_renderer.presentFrame(renderFinishedSemaphore);
                 }
             }
 
@@ -220,7 +276,74 @@ namespace ODEngine {
     std::shared_ptr<ODModel> App::createModelFromFile(const std::string &modelPath){
         return ODModel::createModelFromFile(m_device, modelPath);
     }
-    void App::debugBuffer(ODDevice &device, VkBuffer srcBuffer, size_t size) {
+
+    void App::createTransitionResources(){
+        size_t imageCount = m_renderer.getSwapChain().imageCount();
+
+        m_transitionSemaphores.resize(imageCount);
+        m_transitionCommandBuffers.resize(imageCount);
+        m_transitionFences.resize(imageCount);
+
+        VkSemaphoreCreateInfo semaphoreInfo{};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+        VkFenceCreateInfo fenceInfo{};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT; // Commencer signalé
+    
+        for (size_t i = 0; i < imageCount; i++) {
+            if (vkCreateSemaphore(m_device.device(), &semaphoreInfo, nullptr, &m_transitionSemaphores[i]) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create transition semaphore!");
+            }
+            if (vkCreateFence(m_device.device(), &fenceInfo, nullptr, &m_transitionFences[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create transition fence!");
+            }
+        }
+
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = m_device.getCommandPool();
+        allocInfo.commandBufferCount = static_cast<uint32_t>(m_transitionCommandBuffers.size());
+        
+        if (vkAllocateCommandBuffers(m_device.device(), &allocInfo, m_transitionCommandBuffers.data()) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate transition command buffers!");
+        }
+    }
+
+    void App::transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
+    {
+        VkImageMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.oldLayout = oldLayout;
+        barrier.newLayout = newLayout;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = image;
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        barrier.subresourceRange.baseMipLevel = 0;
+        barrier.subresourceRange.levelCount = 1;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = 1;
+
+        VkPipelineStageFlags sourceStage;
+        VkPipelineStageFlags destinationStage;
+
+        if (oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && 
+            newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            barrier.dstAccessMask = 0; // Présentation n'a pas besoin d'accès spécial
+            sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        } else {
+            throw std::runtime_error("unsupported layout transition!");
+        }
+
+        vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    }
+
+    void App::debugBuffer(ODDevice &device, VkBuffer srcBuffer, size_t size)
+    {
         ODBuffer stagingBuffer{
         device,
         sizeof(ODParticles::Particle),  // Taille par élément
