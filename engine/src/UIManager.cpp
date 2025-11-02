@@ -74,13 +74,13 @@ namespace ODEngine {
                 std::cout << "Button pressed!" << std::endl;
             }
             
-            nk_layout_row_dynamic(m_context, 30, 2);
-            if (nk_option_label(m_context, "easy", 1)) {
-                std::cout << "Easy option selected" << std::endl;
-            }
-            if (nk_option_label(m_context, "hard", 0)) {
-                std::cout << "Hard option selected" << std::endl;
-            }
+            // nk_layout_row_dynamic(m_context, 30, 2);
+            // if (nk_option_label(m_context, "easy", 1)) {
+            //     std::cout << "Easy option selected" << std::endl;
+            // }
+            // if (nk_option_label(m_context, "hard", 0)) {
+            //     std::cout << "Hard option selected" << std::endl;
+            // }
         }
         nk_end(m_context);
    }

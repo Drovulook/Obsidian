@@ -76,7 +76,7 @@ namespace ODEngine {
             //     createCommandBuffers();
             // }
         }
-        std::cout << "Image views size: " << m_swapChain->getImagesView().size() << std::endl;
+
         if (m_uiManager) {
             auto actualExtent = m_swapChain->getSwapChainExtent();
             m_uiManager->updateResources(
@@ -88,8 +88,12 @@ namespace ODEngine {
         }
     }
 
-    void ODRenderer::createCommandBuffers(){
-        
+    void ODRenderer::consumeSemaphore() {
+    }
+
+    void ODRenderer::createCommandBuffers()
+    {
+
         // Allocate command buffers  
         m_commandBuffers.resize(ODSwapChain::MAX_FRAMES_IN_FLIGHT);
         VkCommandBufferAllocateInfo allocInfo{};
@@ -160,18 +164,18 @@ namespace ODEngine {
         return renderFinishedSemaphore;
     }
 
-    void ODRenderer::presentFrame(VkSemaphore waitSemaphore){
+    void ODRenderer::presentFrame(VkSemaphore waitSemaphore) {
         m_swapChain->presentFrameWithSemaphore(&m_currentImageIndex, waitSemaphore);
     }
 
-    VkCommandBuffer ODRenderer::beginFrame()
-    {
+    VkCommandBuffer ODRenderer::beginFrame() {
         assert(!m_isFrameStarted && "Cannot call beginFrame while a frame is already in progress!");
         
         auto result = m_swapChain->acquireNextImage(&m_currentImageIndex);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             recreateSwapChain();
+            m_isFrameStarted = false;
             return nullptr;  
         }
 

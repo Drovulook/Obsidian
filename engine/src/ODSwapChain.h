@@ -28,7 +28,7 @@ class ODSwapChain {
   VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
   VkRenderPass getRenderPass() { return renderPass; }
   VkImageView getImageView(int index) { return swapChainImageViews[index]; }
-  std::vector<VkImageView> getImagesView() { return swapChainImageViews; }
+  std::vector<VkImageView>& getImagesView() { return swapChainImageViews; }
   size_t imageCount() { return swapChainImages.size(); }
   std::vector<VkImage> getImages() { return swapChainImages; }
   VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }

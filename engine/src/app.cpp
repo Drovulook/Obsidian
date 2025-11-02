@@ -159,44 +159,44 @@ namespace ODEngine {
             m_cameraObject.camera->updatePerspectiveProjection(aspect);
 
             int frameIndex = m_renderer.getCurrentFrameIndex();
-            if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
-            
-            FrameInfo frameInfo{
-                frameIndex,
-                deltaTime,
-                commandBuffer,
-                *m_cameraObject.camera,
-                globalDescriptorSets[frameIndex],
-                m_gameObjects,
-                m_particleSystem.getParticleBuffers()[(frameIndex + 1) % 2]->getBuffer()
-            };
+            auto commandBuffer = m_renderer.beginFrame();
+            if(commandBuffer != nullptr) { // If swapChain needs to be recreated, returns a nullptr
+                
+                FrameInfo frameInfo{
+                    frameIndex,
+                    deltaTime,
+                    commandBuffer,
+                    *m_cameraObject.camera,
+                    globalDescriptorSets[frameIndex],
+                    m_gameObjects,
+                    m_particleSystem.getParticleBuffers()[(frameIndex + 1) % 2]->getBuffer()
+                };
 
-            // update
-            GlobalUbo ubo{};
-            ubo.projection = m_cameraObject.camera->getProjection();
-            ubo.view = m_cameraObject.camera->getView();
-            ubo.inverseView = m_cameraObject.camera->getInverseView();
-            pointLightSystem.update(frameInfo, ubo);
-            uboBuffers[frameIndex]->writeToBuffer(&ubo);
-            uboBuffers[frameIndex]->flush();
+                // update
+                GlobalUbo ubo{};
+                ubo.projection = m_cameraObject.camera->getProjection();
+                ubo.view = m_cameraObject.camera->getView();
+                ubo.inverseView = m_cameraObject.camera->getInverseView();
+                pointLightSystem.update(frameInfo, ubo);
+                uboBuffers[frameIndex]->writeToBuffer(&ubo);
+                uboBuffers[frameIndex]->flush();
 
-            // compute
-            ComputeShaderFrameInfo computeFrameInfo{
-                deltaTime,
-                commandBuffer,
-                globalDescriptorSets[frameIndex]
-            };
-            
-            uboComputeBuffers[frameIndex]->writeToBuffer(&deltaTime);
-            uboComputeBuffers[frameIndex]->flush();
-            
-            // compute
-            gpuParticleSystem.compute(frameInfo, m_renderer.getCurrentComputeCommandBuffers(),
-            m_renderer.getComputeFinishedSemaphores(),
-            m_renderer.getComputeInFlightFences()
-            );
-            
-
+                // compute
+                ComputeShaderFrameInfo computeFrameInfo{
+                    deltaTime,
+                    commandBuffer,
+                    globalDescriptorSets[frameIndex]
+                };
+                
+                uboComputeBuffers[frameIndex]->writeToBuffer(&deltaTime);
+                uboComputeBuffers[frameIndex]->flush();
+                
+                // compute
+                gpuParticleSystem.compute(frameInfo, m_renderer.getCurrentComputeCommandBuffers(),
+                m_renderer.getComputeFinishedSemaphores(),
+                m_renderer.getComputeInFlightFences()
+                );
+                
                 // render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
                 
@@ -209,62 +209,65 @@ namespace ODEngine {
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 
                 VkSemaphore renderFinishedSemaphore = m_renderer.endFrameWithoutPresent();
-                uint32_t currentImageIndex = m_renderer.getCurrentImageIndex();
-                
-                m_uiManager->newFrame();
-                m_uiManager->render();
-
-                VkSemaphore uiSemaphore = m_uiManager->renderUI(
-                    m_device.graphicsQueue(), 
-                    currentImageIndex,
-                    renderFinishedSemaphore
-                );
 
                 if (renderFinishedSemaphore != VK_NULL_HANDLE) {
+                    uint32_t currentImageIndex = m_renderer.getCurrentImageIndex();
+                    
+                    m_uiManager->newFrame();
+                    m_uiManager->render();
 
-                    vkWaitForFences(m_device.device(), 1, &m_transitionFences[currentImageIndex], VK_TRUE, UINT64_MAX);
-                    vkResetFences(m_device.device(), 1, &m_transitionFences[currentImageIndex]);
-                    
-                    VkCommandBuffer transitionCmd = m_transitionCommandBuffers[currentImageIndex];
-                    vkResetCommandBuffer(transitionCmd, 0);
-    
-                    VkCommandBufferBeginInfo beginInfo{};
-                    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-                    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-                    vkBeginCommandBuffer(transitionCmd, &beginInfo);
-                    
-                    // Transition de layout pour la présentation
-                    VkImage swapChainImage = m_renderer.getSwapChain().getImages()[currentImageIndex];
-                    transitionImageLayout(transitionCmd, swapChainImage, 
-                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
-                                        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-                    
-                    vkEndCommandBuffer(transitionCmd);
-                    
-                    // Soumettre la transition
-                    VkSubmitInfo submitInfo{};
-                    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                    submitInfo.waitSemaphoreCount = 1;
-                    submitInfo.pWaitSemaphores = &uiSemaphore;
-                    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                    submitInfo.pWaitDstStageMask = &waitStage;
-                    submitInfo.commandBufferCount = 1;
-                    submitInfo.pCommandBuffers = &transitionCmd;
-                    
-                    // Créer un nouveau sémaphore pour signaler la fin de la transition
-                    VkSemaphore transitionSemaphore = m_transitionSemaphores[currentImageIndex];
-                    submitInfo.signalSemaphoreCount = 1;
-                    submitInfo.pSignalSemaphores = &transitionSemaphore;
-                    
-                    vkQueueSubmit(m_device.graphicsQueue(), 1, &submitInfo, m_transitionFences[currentImageIndex]);
+                    VkSemaphore uiSemaphore = m_uiManager->renderUI(
+                        m_device.graphicsQueue(), 
+                        currentImageIndex,
+                        renderFinishedSemaphore
+                    );
 
-                    // Présenter en attendant que l'UI soit terminée
-                    m_renderer.presentFrame(transitionSemaphore);
+                        vkWaitForFences(m_device.device(), 1, &m_transitionFences[currentImageIndex], VK_TRUE, UINT64_MAX);
+                        vkResetFences(m_device.device(), 1, &m_transitionFences[currentImageIndex]);
+                        
+                        VkCommandBuffer transitionCmd = m_transitionCommandBuffers[currentImageIndex];
+                        vkResetCommandBuffer(transitionCmd, 0);
+        
+                        VkCommandBufferBeginInfo beginInfo{};
+                        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+                        vkBeginCommandBuffer(transitionCmd, &beginInfo);
+                        
+                        // Transition de layout pour la présentation
+                        VkImage swapChainImage = m_renderer.getSwapChain().getImages()[currentImageIndex];
+                        transitionImageLayout(transitionCmd, swapChainImage, 
+                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+                                            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+                        
+                        vkEndCommandBuffer(transitionCmd);
+                        
+                        // Soumettre la transition
+                        VkSubmitInfo submitInfo{};
+                        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                        submitInfo.waitSemaphoreCount = 1;
+                        submitInfo.pWaitSemaphores = &uiSemaphore;
+                        VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                        submitInfo.pWaitDstStageMask = &waitStage;
+                        submitInfo.commandBufferCount = 1;
+                        submitInfo.pCommandBuffers = &transitionCmd;
+                        
+                        // Créer un nouveau sémaphore pour signaler la fin de la transition
+                        VkSemaphore transitionSemaphore = m_transitionSemaphores[currentImageIndex];
+                        submitInfo.signalSemaphoreCount = 1;
+                        submitInfo.pSignalSemaphores = &transitionSemaphore;
+                        
+                        vkQueueSubmit(m_device.graphicsQueue(), 1, &submitInfo, m_transitionFences[currentImageIndex]);
+
+                        // Présenter en attendant que l'UI soit terminée
+                        m_renderer.presentFrame(transitionSemaphore);
                 } else {
                     // Fallback si l'UI ne retourne pas de sémaphore
                     std::cout << "Warning: UI Manager did not return a semaphore, presenting directly after rendering." << std::endl;
                     m_renderer.presentFrame(renderFinishedSemaphore);
                 }
+            } else {
+                std::cout << "Swap chain recreation in progress, skipping frame rendering." << std::endl;
+                m_renderer.consumeSemaphore();
             }
 
         // size_t bufferSize = sizeof(ODParticles::Particle) * ODParticles::PARTICLE_COUNT;

@@ -55,6 +55,8 @@ namespace ODEngine {
             VkCommandBuffer getCurrentComputeCommandBuffers() { 
                 return m_computeCommandBuffers[m_currentFrameIndex]; }
 
+            void consumeSemaphore();
+
         private:
             void createCommandBuffers();
             void createComputeCommandBuffers();
