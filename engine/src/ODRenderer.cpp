@@ -43,8 +43,8 @@ namespace {
 
 namespace ODEngine {
 
-    ODRenderer::ODRenderer(ODWindow& window, ODDevice& device)
-        : m_window(window), m_device(device) {
+    ODRenderer::ODRenderer(ODWindow& window, ODDevice& device, std::shared_ptr<UIManager> uiManager)
+        : m_window(window), m_device(device), m_uiManager(uiManager) {
         recreateSwapChain();
         createCommandBuffers(); // Déjà alloué dans recreateSwapChain()
         createComputeCommandBuffers();
@@ -75,6 +75,16 @@ namespace ODEngine {
             //     freeCommandBuffers();
             //     createCommandBuffers();
             // }
+        }
+        std::cout << "Image views size: " << m_swapChain->getImagesView().size() << std::endl;
+        if (m_uiManager) {
+            auto actualExtent = m_swapChain->getSwapChainExtent();
+            m_uiManager->updateResources(
+                m_swapChain->getImagesView().data(),
+                static_cast<uint32_t>(m_swapChain->getImagesView().size()),
+                actualExtent.width,
+                actualExtent.height
+            );
         }
     }
 

@@ -4,6 +4,7 @@
 #include "ODModel.h"
 #include "ODSwapChain.h"
 #include "ODWindow.h"
+#include "UIManager.h"
 
 // std
 #include <cassert>
@@ -11,10 +12,11 @@
 #include <vector>
 
 namespace ODEngine {
+
     class ODRenderer {
         public:
 
-            ODRenderer(ODWindow& window, ODDevice& device);
+            ODRenderer(ODWindow& window, ODDevice& device, std::shared_ptr<UIManager>);
             virtual ~ODRenderer();
 
             ODRenderer(const ODRenderer&) = delete;
@@ -69,6 +71,8 @@ namespace ODEngine {
             uint32_t m_currentImageIndex;
             int m_currentFrameIndex{0};
             bool m_isFrameStarted = false;
+
+            std::shared_ptr<UIManager> m_uiManager;
 
     };
 }

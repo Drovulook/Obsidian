@@ -16,6 +16,7 @@
 
 #include "UIManager.h"
 #include <iostream>
+#include <stdexcept>
 
 namespace ODEngine {
     UIManager::UIManager() {
@@ -34,6 +35,14 @@ namespace ODEngine {
     void UIManager::init(GLFWwindow *win, VkDevice logical_device, VkPhysicalDevice physical_device, 
         uint32_t graphics_queue_family_index, VkImageView *image_views, uint32_t image_views_len, 
         VkFormat color_format, VkQueue graphics_queue) {
+
+        m_window = win;
+        m_logical_device = logical_device;
+        m_physical_device = physical_device;
+        m_graphics_queue_family_index = graphics_queue_family_index;
+        m_color_format = color_format;
+        m_graphics_queue = graphics_queue;
+
         m_context = nk_glfw3_init(win, logical_device, physical_device, graphics_queue_family_index, 
             image_views, image_views_len, color_format, NK_GLFW3_INSTALL_CALLBACKS, 512 * 1024, 128 * 1024);
             
@@ -79,13 +88,51 @@ namespace ODEngine {
    void UIManager::handleInput() {
 
    }
+
    void UIManager::newFrame() {
     if (m_initialized) {
             nk_glfw3_new_frame();
         }
    }
+
    VkSemaphore UIManager::renderUI(VkQueue graphicsQueue, uint32_t imageIndex, VkSemaphore waitSemaphore) {
        if (!m_initialized) return VK_NULL_HANDLE;
         return nk_glfw3_render(graphicsQueue, imageIndex, waitSemaphore, NK_ANTI_ALIASING_ON);
    }
+   
+   void UIManager::updateResources(VkImageView *image_views, uint32_t image_views_len, uint32_t framebuffer_width, uint32_t framebuffer_height) {
+    if (!m_initialized) {
+           std::cerr << "UIManager not initialized; cannot update resources." << std::endl;
+           return;
+       }
+       
+       std::cout << "Updating UIManager resources to " << framebuffer_width << "x" << framebuffer_height << std::endl;
+       
+       // Attendre que le device soit idle avant de détruire les ressources
+       vkDeviceWaitIdle(m_logical_device);
+       
+       // Détruire l'ancienne instance Nuklear
+       nk_glfw3_shutdown();
+       m_initialized = false;
+       m_context = nullptr;
+       
+       // Recréer avec les nouvelles ressources
+       m_context = nk_glfw3_init(m_window, m_logical_device, m_physical_device, 
+                                m_graphics_queue_family_index, image_views, image_views_len, 
+                                m_color_format, NK_GLFW3_INSTALL_CALLBACKS, 512 * 1024, 128 * 1024);
+           
+       if (m_context) {
+           m_initialized = true;
+           
+           // Reconfigurer les polices
+           struct nk_font_atlas *atlas;
+           nk_glfw3_font_stash_begin(&atlas);
+           nk_glfw3_font_stash_end(m_graphics_queue);
+           
+           std::cout << "UIManager resources updated successfully." << std::endl;
+       } else {
+           std::cerr << "Failed to update UIManager resources." << std::endl;
+       }
+   }
+
 } // namespace ODEngine

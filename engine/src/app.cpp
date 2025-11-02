@@ -57,7 +57,7 @@ namespace ODEngine {
 
     void App::run() {
 
-        m_uiManager.init(
+        m_uiManager->init(
             m_window.getGLFWWindow(),
             m_device.device(),
             m_device.physicalDevice(),
@@ -142,6 +142,11 @@ namespace ODEngine {
         while(!m_window.shouldClose()) {
             glfwPollEvents(); 
 
+            auto currentExtent = m_window.getExtent();
+            if (currentExtent.width == 0 || currentExtent.height == 0) {
+                continue;  // Ignore le rendu si minimisé
+            }
+
             auto newTime = std::chrono::high_resolution_clock::now();
             float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
@@ -153,8 +158,8 @@ namespace ODEngine {
             float aspect = m_renderer.getAspectRatio();
             m_cameraObject.camera->updatePerspectiveProjection(aspect);
 
-            auto commandBuffer = m_renderer.getCurrentCommandBuffer();  
             int frameIndex = m_renderer.getCurrentFrameIndex();
+            if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
             
             FrameInfo frameInfo{
                 frameIndex,
@@ -191,7 +196,6 @@ namespace ODEngine {
             m_renderer.getComputeInFlightFences()
             );
             
-            if(auto commandBuffer = m_renderer.beginFrame()) { // If swapChain needs to be recreated, returns a nullptr
 
                 // render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
@@ -207,11 +211,10 @@ namespace ODEngine {
                 VkSemaphore renderFinishedSemaphore = m_renderer.endFrameWithoutPresent();
                 uint32_t currentImageIndex = m_renderer.getCurrentImageIndex();
                 
-                m_uiManager.newFrame();
-                m_uiManager.render();
+                m_uiManager->newFrame();
+                m_uiManager->render();
 
-                // UI attend que le rendu graphics soit terminé
-                VkSemaphore uiSemaphore = m_uiManager.renderUI(
+                VkSemaphore uiSemaphore = m_uiManager->renderUI(
                     m_device.graphicsQueue(), 
                     currentImageIndex,
                     renderFinishedSemaphore

@@ -43,12 +43,12 @@ namespace ODEngine {
         private:
             ODWindow m_window{WIDTH, HEIGHT, "Obsidian Engine"};
             ODDevice m_device{m_window};
-            ODRenderer m_renderer{m_window, m_device};
+            std::shared_ptr<UIManager> m_uiManager = std::make_shared<UIManager>();
+            ODRenderer m_renderer{m_window, m_device, m_uiManager};
             ODParticles::ParticleSystem m_particleSystem{m_device, WIDTH, HEIGHT};
             std::unique_ptr<ODDescriptorPool> m_globalDescriptorPool{};
             std::shared_ptr<ODGameObject> m_cameraObject = nullptr;
 
-            UIManager m_uiManager;
 
             std::vector<VkSemaphore> m_transitionSemaphores;
             std::vector<VkCommandBuffer> m_transitionCommandBuffers;
