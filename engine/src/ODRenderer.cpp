@@ -148,9 +148,12 @@ namespace ODEngine {
             throw std::runtime_error("failed to record command buffer!");
         }
 
-        auto result = m_swapChain->submitCommandBuffersWithoutPresent(&commandBuffer, &m_currentImageIndex);
+        const uint32_t frameIndex = static_cast<uint32_t>(m_currentFrameIndex);
+
+        auto result = m_swapChain->submitCommandBuffersWithoutPresent(&commandBuffer, &m_currentImageIndex, frameIndex);
         if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.wasWindowResized()) {
             m_window.resetWindowResizedFlag();
+            std::cout << "Swap chain out of date or suboptimal during endFrameWithoutPresent, recreating swap chain." << std::endl;
             recreateSwapChain();
         } else if (result != VK_SUCCESS) { // Ne lancer l'exception que pour les autres erreurs réelles
             std::cerr << "vkQueuePresentKHR returned: " << vkResultToString(result) << " (" << (int)result << ")" << std::endl;
@@ -170,7 +173,16 @@ namespace ODEngine {
 
     VkCommandBuffer ODRenderer::beginFrame() {
         assert(!m_isFrameStarted && "Cannot call beginFrame while a frame is already in progress!");
+        // auto winExtent = m_window.getExtent();
+        // if ((m_window.wasWindowResized() ||
+        //     winExtent.width  != m_swapChain->width() ||
+        //     winExtent.height != m_swapChain->height()) &&
+        //     winExtent.width > 0 && winExtent.height > 0) {
+        //     recreateSwapChain();
+        //     m_isFrameStarted = false;
+        //     return nullptr;  
         
+        //     }
         auto result = m_swapChain->acquireNextImage(&m_currentImageIndex);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {

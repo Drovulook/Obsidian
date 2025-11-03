@@ -13,6 +13,17 @@
 
 namespace ODEngine {
 
+template <typename HandleT>
+static inline unsigned long long vk_handle_to_ull(HandleT h) {
+#if (VK_USE_64_BIT_PTR_DEFINES == 1)
+  // Représentation pointeur -> convertir via uintptr_t
+  return static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(h));
+#else
+  // Représentation entière -> conversion directe
+  return static_cast<unsigned long long>(h);
+#endif
+}
+
 class ODSwapChain {
  public:
   static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
@@ -38,7 +49,7 @@ class ODSwapChain {
   std::vector<VkSemaphore> computeFinishedSemaphores() { return computeFinishedSemaphores_; }
   std::vector<VkFence> computeInFlightFences() { return computeInFlightFences_; }
   
-  VkResult submitCommandBuffersWithoutPresent(const VkCommandBuffer *buffers, uint32_t *imageIndex);
+  VkResult submitCommandBuffersWithoutPresent(const VkCommandBuffer *buffers, uint32_t *imageIndex, uint32_t frameIndex);
   void presentFrameWithSemaphore(uint32_t *imageIndex, VkSemaphore waitSemaphore);
   VkSemaphore getRenderFinishedSemaphore(uint32_t imageIndex) { return renderFinishedSemaphores[imageIndex]; }
 

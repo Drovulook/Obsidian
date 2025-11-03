@@ -464,6 +464,10 @@ void ODSwapChain::createSyncObjects() {
         vkCreateSemaphore(device.device(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) !=VK_SUCCESS) {
       throw std::runtime_error("failed to create graphics synchronization objects for image!");
     }
+    // const auto imgAvail = vk_handle_to_ull(imageAvailableSemaphores[i]);
+    // const auto rendFin  = vk_handle_to_ull(renderFinishedSemaphores[i]);
+    // printf("Created semaphore swapchain.imageAvailable[%zu] = 0x%llx\n", i, imgAvail);
+    // printf("Created semaphore swapchain.renderFinished[%zu] = 0x%llx\n",  i, rendFin);
   }
 
   // Créer les fences pour les frames
@@ -475,6 +479,8 @@ void ODSwapChain::createSyncObjects() {
       vkCreateFence(device.device(), &fenceInfo, nullptr, &computeInFlightFences_[i]) != VK_SUCCESS) {
       throw std::runtime_error("failed to create compute synchronization objects for a frame!");
     }
+    // const auto compFin = vk_handle_to_ull(computeFinishedSemaphores_[i]);
+    // printf("Created semaphore compute.finished[%zu] = 0x%llx\n", i, compFin);
   }
 }
 
@@ -528,7 +534,7 @@ VkExtent2D ODSwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabil
   }
 }
 
-VkResult ODSwapChain::submitCommandBuffersWithoutPresent(const VkCommandBuffer *buffers, uint32_t *imageIndex) {
+VkResult ODSwapChain::submitCommandBuffersWithoutPresent(const VkCommandBuffer *buffers, uint32_t *imageIndex, uint32_t frameIndex) {
     if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(device.device(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
     }
@@ -537,7 +543,7 @@ VkResult ODSwapChain::submitCommandBuffersWithoutPresent(const VkCommandBuffer *
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = {computeFinishedSemaphores_[currentFrame], imageAvailableSemaphores[currentFrame]};
+    VkSemaphore waitSemaphores[] = {computeFinishedSemaphores_[frameIndex], imageAvailableSemaphores[currentFrame]};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 2;
     submitInfo.pWaitSemaphores = waitSemaphores;

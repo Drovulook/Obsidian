@@ -146,7 +146,7 @@ namespace ODEngine {
             if (currentExtent.width == 0 || currentExtent.height == 0) {
                 continue;  // Ignore le rendu si minimisé
             }
-
+            
             auto newTime = std::chrono::high_resolution_clock::now();
             float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
@@ -160,8 +160,8 @@ namespace ODEngine {
 
             int frameIndex = m_renderer.getCurrentFrameIndex();
             auto commandBuffer = m_renderer.beginFrame();
+
             if(commandBuffer != nullptr) { // If swapChain needs to be recreated, returns a nullptr
-                
                 FrameInfo frameInfo{
                     frameIndex,
                     deltaTime,
