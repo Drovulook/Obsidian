@@ -13,7 +13,7 @@
 
 namespace ODEngine {
     namespace ODParticles {
-        const uint32_t PARTICLE_COUNT = 8192 /* * 256*/;
+        const uint32_t PARTICLE_COUNT = 8192 /* * 256 */ ;
 
         struct Particle {
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions() {

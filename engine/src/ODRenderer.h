@@ -46,7 +46,6 @@ namespace ODEngine {
             }
 
             VkCommandBuffer beginFrame();
-            void endFrame();
             void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
             void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
 

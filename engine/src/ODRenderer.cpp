@@ -148,12 +148,9 @@ namespace ODEngine {
             throw std::runtime_error("failed to record command buffer!");
         }
 
-        const uint32_t frameIndex = static_cast<uint32_t>(m_currentFrameIndex);
-
-        auto result = m_swapChain->submitCommandBuffersWithoutPresent(&commandBuffer, &m_currentImageIndex, frameIndex);
+        auto result = m_swapChain->submitCommandBuffersWithoutPresent(&commandBuffer, &m_currentImageIndex, m_currentFrameIndex);
         if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.wasWindowResized()) {
             m_window.resetWindowResizedFlag();
-            std::cout << "Swap chain out of date or suboptimal during endFrameWithoutPresent, recreating swap chain." << std::endl;
             recreateSwapChain();
         } else if (result != VK_SUCCESS) { // Ne lancer l'exception que pour les autres erreurs réelles
             std::cerr << "vkQueuePresentKHR returned: " << vkResultToString(result) << " (" << (int)result << ")" << std::endl;
@@ -161,7 +158,6 @@ namespace ODEngine {
         }
 
         m_isFrameStarted = false;
-        m_currentFrameIndex = (m_currentFrameIndex + 1) % ODSwapChain::MAX_FRAMES_IN_FLIGHT;
 
         VkSemaphore renderFinishedSemaphore = m_swapChain->getRenderFinishedSemaphore(m_currentImageIndex);
         return renderFinishedSemaphore;
@@ -169,6 +165,8 @@ namespace ODEngine {
 
     void ODRenderer::presentFrame(VkSemaphore waitSemaphore) {
         m_swapChain->presentFrameWithSemaphore(&m_currentImageIndex, waitSemaphore);
+
+        m_currentFrameIndex = (m_currentFrameIndex + 1) % ODSwapChain::MAX_FRAMES_IN_FLIGHT;
     }
 
     VkCommandBuffer ODRenderer::beginFrame() {
@@ -183,7 +181,8 @@ namespace ODEngine {
         //     return nullptr;  
         
         //     }
-        auto result = m_swapChain->acquireNextImage(&m_currentImageIndex);
+
+        auto result = m_swapChain->acquireNextImage(&m_currentImageIndex, m_currentFrameIndex);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             recreateSwapChain();
@@ -212,27 +211,6 @@ namespace ODEngine {
         }
 
         return commandBuffer;
-    }
-
-    void ODRenderer::endFrame(){
-        assert(m_isFrameStarted && "Cannot call endFrame while no frame is in progress!");
-        
-        auto commandBuffer = getCurrentCommandBuffer();
-        if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-            throw std::runtime_error("failed to record command buffer!");
-        }
-
-        auto result = m_swapChain->submitCommandBuffers(&commandBuffer, &m_currentImageIndex);
-        if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.wasWindowResized()) {
-            m_window.resetWindowResizedFlag();
-            recreateSwapChain();
-        } else if (result != VK_SUCCESS) { // Ne lancer l'exception que pour les autres erreurs réelles
-            std::cerr << "vkQueuePresentKHR returned: " << vkResultToString(result) << " (" << (int)result << ")" << std::endl;
-            throw std::runtime_error("failed to present swap chain image!");
-        }
-
-        m_isFrameStarted = false;
-        m_currentFrameIndex = (m_currentFrameIndex + 1) % ODSwapChain::MAX_FRAMES_IN_FLIGHT;
     }
 
     void ODRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer){
