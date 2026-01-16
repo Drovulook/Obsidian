@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ODGameObject.h"
-#include "ODWindow.h"
+#include "Renderer/Common/ODGameObject.h"
+#include "Renderer/Common/ODWindow.h"
 
 namespace ODEngine {
     class KeyboardMovementController {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ODDevice.h"
+#include "../Vulkan/ODDevice.h"
 #include "ODModel.h"
-#include "ODSwapChain.h"
+#include "../Vulkan/ODSwapChain.h"
 #include "ODWindow.h"
-#include "UIManager.h"
+#include "UI/UIManager.h"
 
 // std
 #include <cassert>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ODWindow.h"
+#include "../Common/ODWindow.h"
 
 // std lib headers
 #include <string>

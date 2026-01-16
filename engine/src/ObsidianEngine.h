@@ -1,9 +1,9 @@
 #pragma once
 
 // Engine core headers
-#include "app.h"
-#include "ODWindow.h"
-#include "ODDevice.h"
-#include "ODPipeline.h"
-#include "ODSwapChain.h"
-#include "ODModel.h"
+#include "core/app.h"
+#include "Renderer/Common/ODWindow.h"
+#include "Renderer/Vulkan/ODDevice.h"
+#include "Renderer/Vulkan/ODPipeline.h"
+#include "Renderer/Vulkan/ODSwapChain.h"
+#include "Renderer/Common/ODModel.h"

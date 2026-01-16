@@ -1,14 +1,15 @@
 #pragma once
 
-#include "ODDevice.h"
-#include "ODModel.h"
-#include "ODGameObject.h"
-#include "ODWindow.h"
-#include "ODRenderer.h"
-#include "ODDescriptors.h"
-#include "ODTextureHandler.h"
-#include "Particle.h"
-#include "UIManager.h"
+#include "Renderer/Vulkan/ODDevice.h"
+#include "Renderer/Common/ODModel.h"
+#include "Renderer/Common/ODGameObject.h"
+#include "Renderer/Common/ODWindow.h"
+#include "Renderer/Common/ODRenderer.h"
+#include "Renderer/Vulkan/ODDescriptors.h"
+#include "Renderer/Common/ODTextureHandler.h"
+#include "Renderer/Common/ODCamera.h"
+#include "UI/UIManager.h"
+#include "Renderer/Common/Particle.h"
 
 // std
 #include <memory>

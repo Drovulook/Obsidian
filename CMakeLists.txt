@@ -111,7 +111,7 @@ target_link_libraries(ObsidianEngine PUBLIC
 
 # Create executable with main.cpp and sandbox sources
 add_executable(${PROJECT_NAME}
-    engine/src/main.cpp       # Main entry point in engine/src
+    engine/src/core/main.cpp       # Main entry point in engine/src
     ${SANDBOX_SOURCES}
     ${SANDBOX_HEADERS}        # Add sandbox headers for IDE support
 )

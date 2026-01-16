@@ -1,6 +1,6 @@
 #include "ODTextureHandler.h"
-#include "ODBuffer.h"
-#include "ODSwapChain.h"
+#include "../Vulkan/ODBuffer.h"
+#include "../Vulkan/ODSwapChain.h"
 
 // libs
 #define STB_IMAGE_IMPLEMENTATION

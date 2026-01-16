@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ODBuffer.h"
-#include "ODDevice.h"
+#include "../Vulkan/ODBuffer.h"
+#include "../Vulkan/ODDevice.h"
 #include "ODTextureHandler.h"
 
 // libs

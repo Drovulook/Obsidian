@@ -1,5 +1,5 @@
 #include "GPUParticleSystem.h"
-#include "Particle.h"
+#include "Renderer/Common/Particle.h"
 
 // libs
 #define GLM_FORCE_RADIANS

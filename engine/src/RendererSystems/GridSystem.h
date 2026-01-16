@@ -1,12 +1,11 @@
 #pragma once
 
-#include "ODCamera.h"
-#include "ODDevice.h"
-#include "ODModel.h"
-#include "ODGameObject.h"
-#include "ODPipeline.h"
-#include "FrameInfo.h"
-#include "ODModel.h"
+#include "Renderer/Common/ODCamera.h"
+#include "Renderer/Vulkan/ODDevice.h"
+#include "Renderer/Common/ODModel.h"
+#include "Renderer/Common/ODGameObject.h"
+#include "Renderer/Vulkan/ODPipeline.h"
+#include "Renderer/Common/FrameInfo.h"
 
 // std
 #include <memory>

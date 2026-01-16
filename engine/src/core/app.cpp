@@ -1,12 +1,12 @@
 #include "app.h"
 
-#include "keyboardMovementController.h"
+#include "Utils/keyboardMovementController.h"
 #include "RendererSystems/SimpleRendererSystem.h"
 #include "RendererSystems/PointLightSystem.h"
 #include "RendererSystems/GridSystem.h"
 #include "RendererSystems/GPUParticleSystem.h"
-#include "ODBuffer.h"
-#include "Particle.h"
+#include "Renderer/Vulkan/ODBuffer.h"
+#include "Renderer/Common/Particle.h"
 
 // libs
 #define GLM_FORCE_RADIANS

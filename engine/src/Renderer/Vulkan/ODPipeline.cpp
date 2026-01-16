@@ -1,12 +1,11 @@
 #include "ODPipeline.h"
 
-#include "ODModel.h"
+#include "../Common/ODModel.h"
 
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
 #include <cassert>
-#include "ODModel.h"
 
 namespace ODEngine {
 

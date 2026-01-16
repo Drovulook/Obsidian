@@ -1,6 +1,6 @@
 #include "ODModel.h"
-#include "ODUtils.h"
-#include "ODSwapChain.h"
+#include "Utils/ODUtils.h"
+#include "../Vulkan/ODSwapChain.h"
 
 // libs
 #define TINYOBJLOADER_IMPLEMENTATION // à mettre une seule fois dans tout le projet

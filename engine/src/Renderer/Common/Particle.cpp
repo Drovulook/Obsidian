@@ -1,5 +1,5 @@
 #include "Particle.h"
-#include "ODSwapChain.h"
+#include "../Vulkan/ODSwapChain.h"
 
 namespace ODEngine {
     namespace ODParticles {
