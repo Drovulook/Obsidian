@@ -5,27 +5,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Vulkan
-# Set Vulkan SDK path
-set(VULKAN_SDK_PATH "C:/dev/VulkanSDK/1.4.313.2")
-
-# Try to find Vulkan using find_package first
-find_package(Vulkan QUIET)
-
-if(NOT Vulkan_FOUND)
-    # Manual Vulkan detection
-    set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include")
-    set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib/vulkan-1.lib")
-    
-    # Verify that the files exist
-    if(EXISTS "${Vulkan_INCLUDE_DIRS}/vulkan/vulkan.h" AND EXISTS "${Vulkan_LIBRARIES}")
-        set(Vulkan_FOUND TRUE)
-        message(STATUS "Found Vulkan SDK at: ${VULKAN_SDK_PATH}")
-    else()
-        message(FATAL_ERROR "Vulkan SDK not found at ${VULKAN_SDK_PATH}. Please verify the installation.")
-    endif()
-else()
-    message(STATUS "Found Vulkan using find_package")
-endif()
+find_package(Vulkan REQUIRED)
+message(STATUS "Found Vulkan: ${Vulkan_LIBRARIES}")
 
 # Add GLFW
 add_subdirectory(engine/libraries/glfw-3.4)
@@ -134,19 +115,52 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-# Add custom target for shader compilation
-add_custom_target(compile_shaders
-    COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/engine/shaders compile.bat
-    COMMENT "Compiling shaders..."
-    VERBATIM
+# Find glslc shader compiler
+find_program(GLSLC_EXECUTABLE glslc HINTS Vulkan::glslc)
+if(NOT GLSLC_EXECUTABLE)
+    find_program(GLSLC_EXECUTABLE glslc HINTS $ENV{VULKAN_SDK}/bin)
+endif()
+if(NOT GLSLC_EXECUTABLE)
+    message(FATAL_ERROR "glslc not found. Install Vulkan SDK or shaderc.")
+endif()
+message(STATUS "Found glslc: ${GLSLC_EXECUTABLE}")
+
+# Collect shader files
+file(GLOB SHADER_SOURCES
+    "${CMAKE_SOURCE_DIR}/engine/shaders/*.vert"
+    "${CMAKE_SOURCE_DIR}/engine/shaders/*.frag"
+    "${CMAKE_SOURCE_DIR}/engine/shaders/*.comp"
 )
 
-add_custom_command(TARGET compile_shaders POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/engine/shaders/compiled/nuklear
-    COMMAND C:/dev/VulkanSDK/1.4.313.2/Bin/glslc.exe ${CMAKE_SOURCE_DIR}/engine/libraries/nuklear/shaders/demo.vert -o ${CMAKE_SOURCE_DIR}/engine/shaders/compiled/nuklear/demo.vert.spv
-    COMMAND C:/dev/VulkanSDK/1.4.313.2/Bin/glslc.exe ${CMAKE_SOURCE_DIR}/engine/libraries/nuklear/shaders/demo.frag -o ${CMAKE_SOURCE_DIR}/engine/shaders/compiled/nuklear/demo.frag.spv
-    COMMENT "Compiling Nuklear shaders..."
-)
+# Create output directory
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/engine/shaders/compiled)
+
+# Add custom commands for each shader
+set(SHADER_OUTPUTS "")
+foreach(SHADER ${SHADER_SOURCES})
+    get_filename_component(SHADER_NAME ${SHADER} NAME)
+    set(SHADER_OUTPUT "${CMAKE_SOURCE_DIR}/engine/shaders/compiled/${SHADER_NAME}.spv")
+    add_custom_command(
+        OUTPUT ${SHADER_OUTPUT}
+        COMMAND ${GLSLC_EXECUTABLE} ${SHADER} -o ${SHADER_OUTPUT}
+        DEPENDS ${SHADER}
+        COMMENT "Compiling shader ${SHADER_NAME}"
+    )
+    list(APPEND SHADER_OUTPUTS ${SHADER_OUTPUT})
+endforeach()
+
+# Add custom target for shader compilation
+add_custom_target(compile_shaders DEPENDS ${SHADER_OUTPUTS})
+
+# Nuklear shaders (if they exist)
+if(EXISTS "${CMAKE_SOURCE_DIR}/engine/libraries/nuklear/shaders/demo.vert")
+    file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/engine/shaders/compiled/nuklear)
+    add_custom_command(TARGET compile_shaders POST_BUILD
+        COMMAND ${GLSLC_EXECUTABLE} ${CMAKE_SOURCE_DIR}/engine/libraries/nuklear/shaders/demo.vert -o ${CMAKE_SOURCE_DIR}/engine/shaders/compiled/nuklear/demo.vert.spv
+        COMMAND ${GLSLC_EXECUTABLE} ${CMAKE_SOURCE_DIR}/engine/libraries/nuklear/shaders/demo.frag -o ${CMAKE_SOURCE_DIR}/engine/shaders/compiled/nuklear/demo.frag.spv
+        COMMENT "Compiling Nuklear shaders..."
+    )
+endif()
 
 # Make shader compilation a dependency of the engine library
 add_dependencies(ObsidianEngine compile_shaders)

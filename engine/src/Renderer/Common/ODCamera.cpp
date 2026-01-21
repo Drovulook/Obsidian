@@ -2,6 +2,7 @@
 
 // std
 #include <cassert>
+#include <cstdio>
 #include <limits>
 
 namespace ODEngine {

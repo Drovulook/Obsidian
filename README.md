@@ -64,24 +64,33 @@ git clone --recurse-submodules https://github.com/Drovulook/Obsidian.git
 
 cd Obsidian
 
-# Configure CMake (generates Visual Studio solution)
+# On Windows:
+
+## Configure CMake (generates Visual Studio solution)
 cmake -B build -S . -G "Visual Studio 17 2022" -A x64
 
-# Build in Debug mode
+## Compilation
+### in Debug mode
 cmake --build build --config Debug
-
-# Or build in Release mode for better performance
+# in Release mode for better performance
 cmake --build build --config Release
 ```
 
 ## Running the Application
-
 ```bash
-# Run Debug build
+# in Debug mode
 ./build/bin/Debug/Obsidian.exe
-
-# Or run Release build
+# in Release Mode
 ./build/bin/Release/Obsidian.exe
 ```
 
+# On Linux:
 
+# First time (configuration)
+cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+ln -sf build/compile_commands.json .
+
+# Compilation
+cmake --build build
+# Running the Application
+./build/bin/Obsidian
