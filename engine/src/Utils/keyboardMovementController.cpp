@@ -2,15 +2,16 @@
 #include <limits>
 
 namespace ODEngine{
+    KeyboardMovementController* KeyboardMovementController::s_instance = nullptr;
+
     void KeyboardMovementController::init_callbacks(GLFWwindow *window){
-        glfwSetWindowUserPointer(window, this);
+        s_instance = this;
         glfwSetScrollCallback(window, scroll_callback);
     }
 
     void KeyboardMovementController::scroll_callback(GLFWwindow *window, double xoffset, double yoffset){
-        auto* controller = static_cast<KeyboardMovementController*>(glfwGetWindowUserPointer(window));
-        if (controller) {
-            controller->m_lastScrollY = static_cast<float>(yoffset);
+        if (s_instance) {
+            s_instance->m_lastScrollY = static_cast<float>(yoffset);
         }
     }
 

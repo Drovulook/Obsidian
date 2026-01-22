@@ -290,13 +290,9 @@ void App::run() {
 
         // Présenter en attendant que l'UI soit terminée
         m_renderer.presentFrame(transitionSemaphore);
-      } else {
-        // Fallback si l'UI ne retourne pas de sémaphore
-        std::cout << "Warning: UI Manager did not return a semaphore, "
-                     "presenting directly after rendering."
-                  << std::endl;
-        m_renderer.presentFrame(renderFinishedSemaphore);
       }
+      // Si renderFinishedSemaphore == VK_NULL_HANDLE, la swapchain a été recréée
+      // On ne présente rien et on continue la boucle
     } else {
       std::cout
           << "Swap chain recreation in progress, skipping frame rendering."

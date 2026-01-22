@@ -35,5 +35,7 @@ namespace ODEngine {
             float m_scrollSpeed = 50.0f;
 
             float m_lastScrollY = 0.0f;
+
+            static KeyboardMovementController* s_instance;
     };
 }

@@ -152,6 +152,8 @@ namespace ODEngine {
         if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.wasWindowResized()) {
             m_window.resetWindowResizedFlag();
             recreateSwapChain();
+            m_isFrameStarted = false;
+            return VK_NULL_HANDLE;
         } else if (result != VK_SUCCESS) { // Ne lancer l'exception que pour les autres erreurs réelles
             std::cerr << "vkQueuePresentKHR returned: " << vkResultToString(result) << " (" << (int)result << ")" << std::endl;
             throw std::runtime_error("failed to present swap chain image!");
