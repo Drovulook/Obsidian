@@ -63,25 +63,25 @@ namespace ODEngine {
 
    void UIManager::render() {
         if (!m_initialized || !m_context) return;
-        
+
         // Exemple d'interface simple
-        if (nk_begin(m_context, "Demo", nk_rect(50, 50, 230, 250),
+        if (nk_begin(m_context, "Demo", nk_rect(m_demoWindowX, m_demoWindowY, m_demoWindowW, m_demoWindowH),
                     NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
                     NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE)) {
-            
+
             nk_layout_row_static(m_context, 30, 80, 1);
             if (nk_button_label(m_context, "button")) {
                 std::cout << "Button pressed!" << std::endl;
             }
-            
-            // nk_layout_row_dynamic(m_context, 30, 2);
-            // if (nk_option_label(m_context, "easy", 1)) {
-            //     std::cout << "Easy option selected" << std::endl;
-            // }
-            // if (nk_option_label(m_context, "hard", 0)) {
-            //     std::cout << "Hard option selected" << std::endl;
-            // }
         }
+
+        // Sauvegarder la position/taille actuelle (avant nk_end, pendant que la fenêtre est active)
+        struct nk_rect bounds = nk_window_get_bounds(m_context);
+        m_demoWindowX = bounds.x;
+        m_demoWindowY = bounds.y;
+        m_demoWindowW = bounds.w;
+        m_demoWindowH = bounds.h;
+
         nk_end(m_context);
    }
 
@@ -116,10 +116,10 @@ namespace ODEngine {
        m_initialized = false;
        m_context = nullptr;
        
-       // Recréer avec les nouvelles ressources
-       m_context = nk_glfw3_init(m_window, m_logical_device, m_physical_device, 
-                                m_graphics_queue_family_index, image_views, image_views_len, 
-                                m_color_format, NK_GLFW3_INSTALL_CALLBACKS, 512 * 1024, 128 * 1024);
+       // Recréer avec les nouvelles ressources (sans réinstaller les callbacks GLFW)
+       m_context = nk_glfw3_init(m_window, m_logical_device, m_physical_device,
+                                m_graphics_queue_family_index, image_views, image_views_len,
+                                m_color_format, NK_GLFW3_DEFAULT, 512 * 1024, 128 * 1024);
            
        if (m_context) {
            m_initialized = true;

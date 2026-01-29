@@ -28,6 +28,12 @@ namespace ODEngine {
         nk_font_atlas *m_fontAtlas;
         bool m_initialized = false;
 
+        // Sauvegarde des positions des fenêtres UI
+        float m_demoWindowX = 50.f;
+        float m_demoWindowY = 50.f;
+        float m_demoWindowW = 230.f;
+        float m_demoWindowH = 250.f;
+
         VkDevice m_logical_device;
         VkPhysicalDevice m_physical_device;
         uint32_t m_graphics_queue_family_index;
