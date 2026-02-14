@@ -64,18 +64,104 @@ namespace ODEngine {
    void UIManager::render() {
         if (!m_initialized || !m_context) return;
 
-        // Exemple d'interface simple
-        if (nk_begin(m_context, "Demo", nk_rect(m_demoWindowX, m_demoWindowY, m_demoWindowW, m_demoWindowH),
+        // Variables statiques pour conserver l'état
+        static float lastTime = 0.0f;
+        static float fps = 0.0f;
+        static float fpsUpdateTimer = 0.0f;
+        static int frameCount = 0;
+
+        // Paramètres modifiables
+        static float ambientLight = 0.15f;
+        static float lightIntensity = 1.0f;
+        static struct nk_colorf lightColor = {1.0f, 1.0f, 0.9f, 1.0f};
+        static int showWireframe = 0;
+        static int showGrid = 0;
+        static int showParticles = 1;
+        static float particleSpeed = 1.0f;
+        static float cameraSpeed = 2.5f;
+
+        // Calcul FPS
+        float currentTime = static_cast<float>(glfwGetTime());
+        float deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+        frameCount++;
+        fpsUpdateTimer += deltaTime;
+        if (fpsUpdateTimer >= 0.5f) {
+            fps = frameCount / fpsUpdateTimer;
+            frameCount = 0;
+            fpsUpdateTimer = 0.0f;
+        }
+
+        // Fenêtre principale
+        if (nk_begin(m_context, "Obsidian Engine", nk_rect(m_demoWindowX, m_demoWindowY, m_demoWindowW, m_demoWindowH),
                     NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
                     NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE)) {
 
-            nk_layout_row_static(m_context, 30, 80, 1);
-            if (nk_button_label(m_context, "button")) {
-                std::cout << "Button pressed!" << std::endl;
+            // === Section Performance ===
+            if (nk_tree_push(m_context, NK_TREE_TAB, "Performance", NK_MAXIMIZED)) {
+                nk_layout_row_dynamic(m_context, 20, 1);
+                char fpsText[32];
+                snprintf(fpsText, sizeof(fpsText), "FPS: %.1f", fps);
+                nk_label(m_context, fpsText, NK_TEXT_LEFT);
+
+                char dtText[32];
+                snprintf(dtText, sizeof(dtText), "Delta: %.2f ms", deltaTime * 1000.0f);
+                nk_label(m_context, dtText, NK_TEXT_LEFT);
+
+                nk_tree_pop(m_context);
+            }
+
+            // === Section Eclairage ===
+            if (nk_tree_push(m_context, NK_TREE_TAB, "Lighting", NK_MINIMIZED)) {
+                nk_layout_row_dynamic(m_context, 25, 1);
+                nk_label(m_context, "Ambient:", NK_TEXT_LEFT);
+                nk_slider_float(m_context, 0.0f, &ambientLight, 1.0f, 0.01f);
+
+                nk_label(m_context, "Intensity:", NK_TEXT_LEFT);
+                nk_slider_float(m_context, 0.0f, &lightIntensity, 5.0f, 0.1f);
+
+                nk_label(m_context, "Light Color:", NK_TEXT_LEFT);
+                nk_layout_row_dynamic(m_context, 120, 1);
+                lightColor = nk_color_picker(m_context, lightColor, NK_RGBA);
+
+                nk_tree_pop(m_context);
+            }
+
+            // === Section Rendu ===
+            if (nk_tree_push(m_context, NK_TREE_TAB, "Render Options", NK_MINIMIZED)) {
+                nk_layout_row_dynamic(m_context, 25, 1);
+                nk_checkbox_label(m_context, "Wireframe", &showWireframe);
+                nk_checkbox_label(m_context, "Show Grid", &showGrid);
+                nk_checkbox_label(m_context, "Show Particles", &showParticles);
+
+                nk_tree_pop(m_context);
+            }
+
+            // === Section Particules ===
+            if (nk_tree_push(m_context, NK_TREE_TAB, "Particles", NK_MINIMIZED)) {
+                nk_layout_row_dynamic(m_context, 25, 1);
+                nk_label(m_context, "Speed:", NK_TEXT_LEFT);
+                nk_slider_float(m_context, 0.1f, &particleSpeed, 5.0f, 0.1f);
+
+                nk_tree_pop(m_context);
+            }
+
+            // === Section Camera ===
+            if (nk_tree_push(m_context, NK_TREE_TAB, "Camera", NK_MINIMIZED)) {
+                nk_layout_row_dynamic(m_context, 25, 1);
+                nk_label(m_context, "Move Speed:", NK_TEXT_LEFT);
+                nk_slider_float(m_context, 0.5f, &cameraSpeed, 10.0f, 0.5f);
+
+                nk_layout_row_dynamic(m_context, 30, 1);
+                if (nk_button_label(m_context, "Reset Camera")) {
+                    std::cout << "Reset camera requested" << std::endl;
+                }
+
+                nk_tree_pop(m_context);
             }
         }
 
-        // Sauvegarder la position/taille actuelle (avant nk_end, pendant que la fenêtre est active)
+        // Sauvegarder la position/taille actuelle
         struct nk_rect bounds = nk_window_get_bounds(m_context);
         m_demoWindowX = bounds.x;
         m_demoWindowY = bounds.y;

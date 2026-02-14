@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ODDevice.h"
 #include "../Common/FrameInfo.h"
+#include "ODDevice.h"
 
 // vulkan headers
 #include <vulkan/vulkan.h>
@@ -25,43 +25,58 @@ static inline unsigned long long vk_handle_to_ull(HandleT h) {
 }
 
 class ODSwapChain {
- public:
+public:
   static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
   ODSwapChain(ODDevice &deviceRef, VkExtent2D windowExtent);
-  ODSwapChain(ODDevice &deviceRef, VkExtent2D windowExtent, std::shared_ptr<ODSwapChain> previous);
+  ODSwapChain(ODDevice &deviceRef, VkExtent2D windowExtent,
+              std::shared_ptr<ODSwapChain> previous);
 
   ~ODSwapChain();
 
   ODSwapChain(const ODSwapChain &) = delete;
   ODSwapChain &operator=(const ODSwapChain &) = delete;
 
-  VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
+  VkFramebuffer getFrameBuffer(int index) {
+    return swapChainFramebuffers[index];
+  }
   VkRenderPass getRenderPass() { return renderPass; }
   VkImageView getImageView(int index) { return swapChainImageViews[index]; }
-  std::vector<VkImageView>& getImagesView() { return swapChainImageViews; }
+  std::vector<VkImageView> &getImagesView() { return swapChainImageViews; }
   size_t imageCount() { return swapChainImages.size(); }
   std::vector<VkImage> getImages() { return swapChainImages; }
   VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
   VkExtent2D getSwapChainExtent() { return swapChainExtent; }
   uint32_t width() { return swapChainExtent.width; }
   uint32_t height() { return swapChainExtent.height; }
-  std::vector<VkSemaphore> computeFinishedSemaphores() { return computeFinishedSemaphores_; }
-  std::vector<VkFence> computeInFlightFences() { return computeInFlightFences_; }
-  
-  VkResult submitCommandBuffersWithoutPresent(const VkCommandBuffer *buffers, uint32_t *imageIndex, uint32_t frameIndex);
-  void presentFrameWithSemaphore(uint32_t *imageIndex, VkSemaphore waitSemaphore);
-  VkSemaphore getRenderFinishedSemaphore(uint32_t imageIndex) { return renderFinishedSemaphores[imageIndex]; }
+  std::vector<VkSemaphore> computeFinishedSemaphores() {
+    return computeFinishedSemaphores_;
+  }
+  std::vector<VkFence> computeInFlightFences() {
+    return computeInFlightFences_;
+  }
+
+  VkResult submitCommandBuffersWithoutPresent(const VkCommandBuffer *buffers,
+                                              uint32_t *imageIndex,
+                                              uint32_t frameIndex);
+  void presentFrameWithSemaphore(uint32_t *imageIndex,
+                                 VkSemaphore waitSemaphore);
+  VkSemaphore getRenderFinishedSemaphore(uint32_t imageIndex) {
+    return renderFinishedSemaphores[imageIndex];
+  }
 
   float extentAspectRatio() {
-    return static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height);
+    return static_cast<float>(swapChainExtent.width) /
+           static_cast<float>(swapChainExtent.height);
   }
   VkFormat findDepthFormat();
 
   VkResult acquireNextImage(uint32_t *imageIndex, uint32_t frameIndex);
-  VkResult submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex, uint32_t frameIndex);
-  // VkResult submitComputeCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
-  // void recordComputeCommandBuffer(VkCommandBuffer commandBuffer, FrameInfo& frameInfo);
+  VkResult submitCommandBuffers(const VkCommandBuffer *buffers,
+                                uint32_t *imageIndex, uint32_t frameIndex);
+  // VkResult submitComputeCommandBuffers(const VkCommandBuffer *buffers,
+  // uint32_t *imageIndex); void recordComputeCommandBuffer(VkCommandBuffer
+  // commandBuffer, FrameInfo& frameInfo);
   void waitForImageToBeAvailable(uint32_t imageIndex);
 
   bool compareSwapFormats(const ODSwapChain &swapChain) const {
@@ -69,12 +84,19 @@ class ODSwapChain {
            swapChain.swapChainImageFormat == swapChainImageFormat;
   }
 
-  static VkImageView createImageView(ODDevice &app_device, VkImage image, VkFormat format, VkImageAspectFlags aspectMask, uint32_t mipLevels = 1);
-  static void createImage(ODDevice& app_device, uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
-      VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory);
+  static VkImageView createImageView(ODDevice &app_device, VkImage image,
+                                     VkFormat format,
+                                     VkImageAspectFlags aspectMask,
+                                     uint32_t mipLevels = 1);
+  static void createImage(ODDevice &app_device, uint32_t width, uint32_t height,
+                          uint32_t mipLevels, VkSampleCountFlagBits numSamples,
+                          VkFormat format, VkImageTiling tiling,
+                          VkImageUsageFlags usage,
+                          VkMemoryPropertyFlags properties, VkImage &image,
+                          VkDeviceMemory &imageMemory);
 
- private:
- void init();
+private:
+  void init();
   void createSwapChain();
   void createImageViews();
   void createDepthResources();
@@ -123,4 +145,4 @@ class ODSwapChain {
   VkImageView msaaColorImageView;
 };
 
-}  // namespace ODEngine
+} // namespace ODEngine
